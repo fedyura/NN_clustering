@@ -14,8 +14,7 @@ namespace alr //alr => adapt_learn_rate
             return (m_Distance == 0) ? 1.0 / m_NumWinner : 1.0 / (100 * m_NumWinner);
         }
         
-        AdaptLearnRateSoinn(uint32_t iterNumber, double distance, uint32_t numWinner,
-                               double rateBegin, double rateFinal)
+        AdaptLearnRateSoinn(uint32_t iterNumber, double distance, uint32_t numWinner)
             : AbstractAdaptLearnRate(iterNumber, distance)
             , m_NumWinner(numWinner)
         { } 
