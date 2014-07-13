@@ -1,2 +1,3 @@
 ADD_SUBDIRECTORY(adapt_learn_rate)
 ADD_SUBDIRECTORY(container)
+ADD_SUBDIRECTORY(weight_vector)

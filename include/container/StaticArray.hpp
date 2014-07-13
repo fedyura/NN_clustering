@@ -2,6 +2,7 @@
 #define __CONTAINERS_STATIC_ARRAY_HPP__
 
 #include <exception>
+#include <stdint.h>
 
 namespace cont //containers
 {
@@ -9,7 +10,7 @@ namespace cont //containers
     class StaticArray
     {
     public:
-        uint32_t getSize() const
+        uint32_t size() const
         {   
             return m_Size;
         }
@@ -74,7 +75,7 @@ namespace cont //containers
     {
         if (m_MasPoint != NULL)
             delete[] m_MasPoint;
-        m_Size = sa.getSize();
+        m_Size = sa.size();
         m_MasPoint = new T[m_Size];
         for (uint32_t i = 0; i < m_Size; i++)
             m_MasPoint[i] = sa[i];

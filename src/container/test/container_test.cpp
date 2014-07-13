@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(test_StaticArrayWork)
     sa[1] = 7.2;
     sa[2] = 9.3;
 
-    BOOST_CHECK_EQUAL(sa.getSize(), 3);
+    BOOST_CHECK_EQUAL(sa.size(), 3);
     
     BOOST_CHECK_EQUAL(sa[0], 5.1);
     BOOST_CHECK_EQUAL(sa.at(2), 9.3);
@@ -30,13 +30,13 @@ BOOST_AUTO_TEST_CASE(test_CopyStaticArray)
     arr[3] = 4;
     
     cont::StaticArray<uint32_t> arr2(1);
-    BOOST_CHECK_EQUAL(arr2.getSize(), 1);
+    BOOST_CHECK_EQUAL(arr2.size(), 1);
     
     arr2 = arr; 
-    BOOST_CHECK(std::equal(arr.data(), arr.data() + arr.getSize(), arr2.data()));
+    BOOST_CHECK(std::equal(arr.data(), arr.data() + arr.size(), arr2.data()));
 
     cont::StaticArray<uint32_t> arr3(arr);
-    BOOST_CHECK(std::equal(arr.data(), arr.data() + arr.getSize(), arr3.data()));
+    BOOST_CHECK(std::equal(arr.data(), arr.data() + arr.size(), arr3.data()));
     
     cont::StaticArray<uint32_t> arr4 = arr;
 }

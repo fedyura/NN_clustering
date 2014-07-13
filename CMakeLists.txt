@@ -1,7 +1,8 @@
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 PROJECT (Soinn)
 
-SET (CMAKE_CXX_FLAGS "-std=c++0x")
+SET (CMAKE_CXX_FLAGS "-std=c++11")
+#SET (CMAKE_CXX_FLAGS "-frtti")
 
 IF(MSVC)
     # Force to always compile with W4
@@ -14,7 +15,6 @@ IF(MSVC)
         # Update if necessary
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
     ENDIF()
-
 
 ENABLE_TESTING()
 FIND_PACKAGE (Boost 1.50.0 COMPONENTS
