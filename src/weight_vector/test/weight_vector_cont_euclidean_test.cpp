@@ -20,8 +20,9 @@ BOOST_AUTO_TEST_CASE(test_CalcDistance)
 
     wv::WeightVectorContEuclidean wv1(arr1);
     wv::WeightVectorContEuclidean wv2(arr2);
+    wv::AbstractWeightVector* awv = &wv2;
     
-    BOOST_CHECK_EQUAL(wv1.calcDistance(&wv2), 3);
+    BOOST_CHECK_EQUAL(wv1.calcDistance(awv), 3);
     
     cont::StaticArray<double> arr3(4);
     arr2[0] = -1;
@@ -30,7 +31,7 @@ BOOST_AUTO_TEST_CASE(test_CalcDistance)
     arr3[3] = 4;
     wv::WeightVectorContEuclidean wv3(arr3);
     BOOST_CHECK_EQUAL(wv1.calcDistance(&wv3), wv::WRONG_POINT_SIZE);
-    BOOST_CHECK_EQUAL(wv3.calcDistance(&wv2), wv::WRONG_POINT_SIZE);
+    BOOST_CHECK_EQUAL(wv3.calcDistance(awv), wv::WRONG_POINT_SIZE);
 }
 
 BOOST_AUTO_TEST_CASE(test_updateWeightVector)
@@ -47,21 +48,34 @@ BOOST_AUTO_TEST_CASE(test_updateWeightVector)
 
     wv::WeightVectorContEuclidean wv1(arr1);
     wv::WeightVectorContEuclidean wv2(arr2);
+    wv::AbstractWeightVector* awv2 = &wv2;
+    wv::AbstractWeightVector* awv1 = &wv1;
     alr::AdaptLearnRateKohonenSchema alrks1(5, 4, 10, 5, 1, 10); //0.335
     alr::AdaptLearnRateKohonenSchema alrks2(5, 0, 10, 5, 1, 10); //0.606
     
-    BOOST_CHECK_EQUAL(wv1.updateWeightVector(&wv2, &alrks1), true);
+    BOOST_CHECK_EQUAL(awv1->updateWeightVector(awv2, &alrks1), true);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(0)*1000), 328);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(1)*1000), 2671);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(2)*1000), 2664);
     
-    BOOST_CHECK_EQUAL(wv1.updateWeightVector(&wv2, &alrks2), true);
+    BOOST_CHECK_EQUAL(awv1->updateWeightVector(awv2, &alrks2), true);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(0)*1000), -477);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(1)*1000), 3477);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(2)*1000), 2261);
-     
-    
-
 }
+
+BOOST_AUTO_TEST_CASE(test_RandomInitialization)
+{
+    cont::StaticArray<double> arr1(4);
+    arr1[1] = 9;
+    arr1[2] = -4;
+    wv::WeightVectorContEuclidean wv1(arr1);
+    wv::AbstractWeightVector* awv1 = &wv1;
+    awv1->initRandomValues();
+    for (uint32_t i = 0; i < 4; i++)
+        BOOST_CHECK(wv1.getConcreteCoord(i) >= 0 and wv1.getConcreteCoord(i) <= 1);
+}
+
+//Сделать еще один тест на проверку полиморфизма
 
 BOOST_AUTO_TEST_SUITE_END()

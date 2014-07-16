@@ -26,6 +26,9 @@ namespace wv //wv => weight_vector
         
         //Update weight vector in the one training iteration. Return false if error
         virtual bool updateWeightVector(Point* p, const alr::AbstractAdaptLearnRate* alr) = 0;
+
+        //Initialize weight vector with random values
+        virtual void initRandomValues() = 0;
     };
         
 } //wv
