@@ -2,6 +2,7 @@
 #define __WEIGHT_VECTOR_ABSTRACT_WEIGHT_VECTOR__
 
 #include <adapt_learn_rate/AbstractAdaptLearnRate.hpp>
+#include <cmath>
 
 namespace wv //wv => weight_vector
 {
@@ -29,6 +30,8 @@ namespace wv //wv => weight_vector
 
         //Initialize weight vector with random values
         virtual void initRandomValues() = 0;
+
+        virtual ~AbstractWeightVector() { };
     };
         
 } //wv

@@ -2,7 +2,6 @@
 #define __ADAPT_LEARN_RATE_ADAPT_LEARN_RATE_KOHONEN_SCHEMA__
 
 #include <adapt_learn_rate/AbstractAdaptLearnRate.hpp>
-#include <iostream>
 
 namespace alr //alr => adapt_learn_rate
 {

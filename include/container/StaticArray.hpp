@@ -1,7 +1,7 @@
 #ifndef __CONTAINERS_STATIC_ARRAY_HPP__
 #define __CONTAINERS_STATIC_ARRAY_HPP__
 
-#include <exception>
+#include <stdexcept>
 #include <stdint.h>
 
 namespace cont //containers
@@ -48,6 +48,7 @@ namespace cont //containers
         explicit StaticArray(uint32_t size);
         StaticArray(const StaticArray& sa);
         StaticArray& operator=(const StaticArray& sa);
+        StaticArray() { };
 
         ~StaticArray();
 

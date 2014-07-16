@@ -1,3 +1,4 @@
 ADD_SUBDIRECTORY(adapt_learn_rate)
 ADD_SUBDIRECTORY(container)
+ADD_SUBDIRECTORY(neural_network)
 ADD_SUBDIRECTORY(weight_vector)

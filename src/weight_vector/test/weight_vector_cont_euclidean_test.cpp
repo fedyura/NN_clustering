@@ -76,6 +76,4 @@ BOOST_AUTO_TEST_CASE(test_RandomInitialization)
         BOOST_CHECK(wv1.getConcreteCoord(i) >= 0 and wv1.getConcreteCoord(i) <= 1);
 }
 
-//Сделать еще один тест на проверку полиморфизма
-
 BOOST_AUTO_TEST_SUITE_END()
