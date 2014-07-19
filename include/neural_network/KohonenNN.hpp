@@ -15,7 +15,7 @@ namespace nn
     {
     public:
         void initializeNN(); //init nerons by default weight vectors
-        void findWinner();
+        void findWinner(const wv::Point* p);
         void updateWeights();
         void train();
         void getMapError();
@@ -56,6 +56,7 @@ namespace nn
         NetworkInitType m_InitNetType; //Type of network initialization
         neuron::NeuronType m_NeuronType;       //Type of the neuron
         cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
+        uint32_t m_NumNeuronWinner;
     };
 }
 

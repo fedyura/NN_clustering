@@ -10,7 +10,12 @@ namespace nn
         ,m_NumDimensions(num_dimensions)
         ,m_InitNetType(nnit)
         ,m_NeuronType(nt)
+        ,m_NumNeuronWinner(0)
     {
+        if (m_NumClusters < 2)
+            throw std::runtime_error("Can't construct neural network. The number of clusters must be more than 1.");
+        if (m_NumDimensions < 1)
+            throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
         srand(std::time(NULL));
         initializeNN();
     }
@@ -32,7 +37,7 @@ namespace nn
                 }
                 default:
                 {
-                    throw std::runtime_error("Incorrect neuron type");
+                    throw std::runtime_error("Can't construct neural network. Incorrect neuron type.");
                     break;
                 }
             }
@@ -44,6 +49,22 @@ namespace nn
     KohonenNN::~KohonenNN()
     {
         for (uint32_t i = 0; i < m_NumClusters; i++)
-            delete m_Neurons[i].getWv();
+            if (m_Neurons[i].getWv() != NULL)
+                delete m_Neurons[i].getWv();
     }
+
+    void KohonenNN::findWinner(const wv::Point* p)
+    {
+        double min_dist = m_Neurons.at(0).setCurPointDist(p), cur_dist = 0;
+        for (uint32_t i = 1; i < m_NumClusters; i++)
+        {
+            cur_dist = m_Neurons.at(i).setCurPointDist(p);
+            if (cur_dist < min_dist)
+            {
+                min_dist = cur_dist;
+                m_NumNeuronWinner = i;
+            }
+        }
+    }
+    
 }

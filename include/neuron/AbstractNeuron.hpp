@@ -15,6 +15,7 @@ namespace neuron
     public:
         AbstractNeuron(wv::AbstractWeightVector *wv)
             :m_wv(wv)
+            ,m_CurPointDist(-1)
         { }
         
         void initRandomValues()
@@ -27,8 +28,21 @@ namespace neuron
             return m_wv;
         }
 
+        //throw std::runtime_error or std::bad_typeid in the case of error
+        double setCurPointDist(const wv::Point* p)
+        {
+            m_CurPointDist = m_wv->calcDistance(p);
+            return m_CurPointDist;
+        }
+
+        double curPointDist()
+        {
+            return m_CurPointDist;
+        }
+
     protected:
-        wv::AbstractWeightVector* m_wv;         
+        wv::AbstractWeightVector* m_wv;
+        double m_CurPointDist; //distance to the current point         
     };
 } //neuron
 
