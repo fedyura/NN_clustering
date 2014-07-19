@@ -1,22 +1,24 @@
+#include <exception>
+#include <cstring>
+#include <typeinfo>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
 namespace wv
 {
-    double WeightVectorContEuclidean::calcDistance(Point* p) const
+    double WeightVectorContEuclidean::calcDistance(const Point* p) const
     {
-        const WeightVectorContEuclidean* point = dynamic_cast<WeightVectorContEuclidean*>(p);
         uint32_t size = getNumDimensions();
-        if (point == NULL)
-            return WRONG_POINT_TYPE;
-        if (size != point->getNumDimensions())
-            return WRONG_POINT_SIZE;
+        if (strcmp(typeid(*p).name(), typeid(*this).name()) != 0)
+            throw std::bad_typeid();
+        if (size != p->getNumDimensions())
+            throw std::runtime_error("Wrong number of point dimension"); 
         
         double dist = 0.0, diff = 0.0;
         try
         {
             for (uint32_t i = 0; i < size; i++)
             {
-                diff = (getConcreteCoord(i) - point->getConcreteCoord(i));
+                diff = (getConcreteCoord(i) - p->getConcreteCoord(i));
                 dist += diff * diff;            
             }
         }
@@ -28,21 +30,20 @@ namespace wv
         return sqrt(dist);
     }
 
-    bool WeightVectorContEuclidean::updateWeightVector(Point* p, const alr::AbstractAdaptLearnRate* alr)
+    int WeightVectorContEuclidean::updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr)
     {
-        const WeightVectorContEuclidean* point = dynamic_cast<WeightVectorContEuclidean*>(p);
         uint32_t size = getNumDimensions();
-        if (point == NULL)
-            return false;
-        if (size != point->getNumDimensions())
-            return false;
+        if (strcmp(typeid(*p).name(), typeid(*this).name()) != 0)
+            throw std::bad_typeid();
+        if (size != p->getNumDimensions())
+            throw std::runtime_error("Wrong number of point dimension"); 
         
         double rate = alr->getLearnRate(), diff = 0;
         try
         {
             for (uint32_t i = 0; i < size; i++)
             {
-                diff = (point->getConcreteCoord(i) - getConcreteCoord(i));
+                diff = (p->getConcreteCoord(i) - getConcreteCoord(i));
                 m_Coords[i] += rate * diff;  
             }
         }

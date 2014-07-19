@@ -23,14 +23,18 @@ namespace wv //wv => weight_vector
     {
     public:
         //Calculate distance between this weight vector and Point p
-        virtual double calcDistance(Point* p) const = 0;
+        virtual double calcDistance(const Point* p) const = 0;
         
         //Update weight vector in the one training iteration. Return false if error
-        virtual bool updateWeightVector(Point* p, const alr::AbstractAdaptLearnRate* alr) = 0;
+        virtual int updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr) = 0;
 
         //Initialize weight vector with random values
         virtual void initRandomValues() = 0;
 
+        //Get concrete coord
+        virtual double getConcreteCoord(uint32_t number) const = 0;
+        virtual uint32_t getNumDimensions() const = 0;
+        
         virtual ~AbstractWeightVector() { };
     };
         

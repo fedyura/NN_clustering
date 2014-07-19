@@ -21,10 +21,10 @@ namespace wv //wv => weight_vector
         }
         
         //Calculate distance between this weight vector and Point p
-        virtual double calcDistance(Point* p) const;
+        virtual double calcDistance(const Point* p) const;
        
         //Update weight vector in the one training iteration. Return false if error
-        virtual bool updateWeightVector(Point* p, const alr::AbstractAdaptLearnRate* alr);
+        virtual int updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr);
 
         //Initialize weight vector with random values
         virtual void initRandomValues();

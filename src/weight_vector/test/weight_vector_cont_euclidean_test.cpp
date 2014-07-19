@@ -30,8 +30,8 @@ BOOST_AUTO_TEST_CASE(test_CalcDistance)
     arr2[2] = 2;
     arr3[3] = 4;
     wv::WeightVectorContEuclidean wv3(arr3);
-    BOOST_CHECK_EQUAL(wv1.calcDistance(&wv3), wv::WRONG_POINT_SIZE);
-    BOOST_CHECK_EQUAL(wv3.calcDistance(awv), wv::WRONG_POINT_SIZE);
+    BOOST_CHECK_THROW(wv1.calcDistance(&wv3), std::runtime_error);
+    BOOST_CHECK_THROW(wv3.calcDistance(awv), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_updateWeightVector)
