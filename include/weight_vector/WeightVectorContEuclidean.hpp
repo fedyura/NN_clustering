@@ -26,9 +26,6 @@ namespace wv //wv => weight_vector
         //Update weight vector in the one training iteration. Return false if error
         virtual int updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr);
 
-        //Initialize weight vector with random values
-        virtual void initRandomValues();
-
         explicit WeightVectorContEuclidean(const cont::StaticArray<double>& coords)
             : m_Coords(coords)
         { }

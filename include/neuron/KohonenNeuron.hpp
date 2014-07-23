@@ -9,7 +9,7 @@ namespace neuron
     class KohonenNeuron: public AbstractNeuron
     {
     public:
-        KohonenNeuron(/*std::shared_ptr<wv::AbstractWeightVector>& sAwv*/ wv::AbstractWeightVector* wv)
+        KohonenNeuron(wv::AbstractWeightVector* wv)
             :AbstractNeuron(wv)
         { }
         KohonenNeuron()

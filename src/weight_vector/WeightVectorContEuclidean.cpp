@@ -24,7 +24,7 @@ namespace wv
         }
         catch (std::exception& ex)
         {
-            return UNDEFINED_ERROR;
+            throw std::exception();
         }
         
         return sqrt(dist);
@@ -49,14 +49,8 @@ namespace wv
         }
         catch (std::exception& ex)
         {
-            return false;
+            throw std::exception();
         }
         return true;
-    }
-
-    void WeightVectorContEuclidean::initRandomValues()
-    {
-        for (uint32_t i = 0; i < getNumDimensions(); i++)
-            m_Coords[i] = ((double) rand() / (RAND_MAX));
     }
 } //wv

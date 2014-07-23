@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE ADAPT_LEARN_RATE_TEST
+#define BOOST_TEST_MODULE KOHONEN_NN_TEST
 #include <boost/test/unit_test.hpp>
 
 using namespace boost;

@@ -18,11 +18,6 @@ namespace neuron
             ,m_CurPointDist(-1)
         { }
         
-        void initRandomValues()
-        {
-            m_wv->initRandomValues();
-        }
-
         wv::AbstractWeightVector* getWv()
         {
             return m_wv;
@@ -40,8 +35,13 @@ namespace neuron
             return m_CurPointDist;
         }
 
+        void setZeroPointer()
+        {
+            m_wv = NULL;
+        }
+
     protected:
-        wv::AbstractWeightVector* m_wv;
+        wv::AbstractWeightVector* m_wv = NULL;
         double m_CurPointDist; //distance to the current point         
     };
 } //neuron

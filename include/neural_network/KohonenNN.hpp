@@ -13,13 +13,7 @@ namespace nn
     
     class KohonenNN
     {
-    public:
-        void initializeNN(); //init nerons by default weight vectors
-        void findWinner(const wv::Point* p);
-        void updateWeights();
-        void train();
-        void getMapError();
-        
+    public:        
         //get methods
         uint32_t numClusters()
         {
@@ -46,17 +40,35 @@ namespace nn
             return m_Neurons.at(number);
         }
 
+        uint32_t numNeuronWinner()
+        {
+            return m_NumNeuronWinner;
+        }
+
         virtual ~KohonenNN();
 
         KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
+    protected:  
+        //only for class-descendant
+        KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        
+        cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
+        
+        //methods described network algorithm. It might be overrided in derived class  
+        void findWinner(const wv::Point* p);
+        void updateWeights();
+        void train();
+        void getMapError();
+    
     private:
         uint32_t m_NumClusters;        //Number of clusters equal number of neurons
         uint32_t m_NumDimensions;
         NetworkInitType m_InitNetType; //Type of network initialization
         neuron::NeuronType m_NeuronType;       //Type of the neuron
-        cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
         uint32_t m_NumNeuronWinner;
+
+        void initializeNN(); //init neurons by default weight vectors
     };
 }
 

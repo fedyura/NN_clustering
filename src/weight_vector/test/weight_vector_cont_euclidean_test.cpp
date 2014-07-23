@@ -64,16 +64,4 @@ BOOST_AUTO_TEST_CASE(test_updateWeightVector)
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(2)*1000), 2261);
 }
 
-BOOST_AUTO_TEST_CASE(test_RandomInitialization)
-{
-    cont::StaticArray<double> arr1(4);
-    arr1[1] = 9;
-    arr1[2] = -4;
-    wv::WeightVectorContEuclidean wv1(arr1);
-    wv::AbstractWeightVector* awv1 = &wv1;
-    awv1->initRandomValues();
-    for (uint32_t i = 0; i < 4; i++)
-        BOOST_CHECK(wv1.getConcreteCoord(i) >= 0 and wv1.getConcreteCoord(i) <= 1);
-}
-
 BOOST_AUTO_TEST_SUITE_END()
