@@ -1,6 +1,7 @@
 #ifndef __CONTAINERS_STATIC_ARRAY_HPP__
 #define __CONTAINERS_STATIC_ARRAY_HPP__
 
+#include <algorithm>
 #include <stdexcept>
 #include <stdint.h>
 
@@ -47,10 +48,17 @@ namespace cont //containers
         
         explicit StaticArray(uint32_t size);
         StaticArray(const StaticArray& sa);
-        StaticArray& operator=(const StaticArray& sa);
+        StaticArray& operator=(StaticArray sa);
         StaticArray() { };
 
         ~StaticArray();
+
+        friend void swap(StaticArray& first, StaticArray& second) //nothrow
+        {
+            using std::swap;
+            swap(first.m_Size, second.m_Size);
+            swap(first.m_MasPoint, second.m_MasPoint);
+        }
 
     private:
         T* m_MasPoint = NULL;
@@ -72,21 +80,19 @@ namespace cont //containers
     }
 
     template <typename T>
-    StaticArray<T>& StaticArray<T>::operator=(const StaticArray& sa)
+    StaticArray<T>& StaticArray<T>::operator=(StaticArray sa) //copy and swap idiom
     {
-        if (m_MasPoint != NULL)
-            delete[] m_MasPoint;
-        m_Size = sa.size();
-        m_MasPoint = new T[m_Size];
-        for (uint32_t i = 0; i < m_Size; i++)
-            m_MasPoint[i] = sa[i];
-        return *this;    
+        swap(*this, sa);
+        return *this;
     }
 
     template <typename T>
     StaticArray<T>::StaticArray(const StaticArray& sa)
     {
-        *this = sa;
+        m_Size = sa.size();
+        m_MasPoint = new T[m_Size];
+        for (uint32_t i = 0; i < m_Size; i++)
+            m_MasPoint[i] = sa[i];
     }
 
 } //cont
