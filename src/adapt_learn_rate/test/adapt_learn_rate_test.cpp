@@ -9,10 +9,11 @@ BOOST_AUTO_TEST_SUITE(AdaptLearnRate)
 
 BOOST_AUTO_TEST_CASE(test_KohonenSchema)
 {
-    alr::AdaptLearnRateKohonenSchema alrks1(5, 4, 10, 5, 1, 10);
+    alr::KohonenParameters kp1(10, 5, 1, 10);
+    alr::AdaptLearnRateKohonenSchema alrks1(5, 4, kp1);
     BOOST_CHECK_EQUAL(int(alrks1.getLearnRate()*1000), 335); 
 
-    alr::AdaptLearnRateKohonenSchema alrks2(5, 0, 10, 5, 1, 10);
+    alr::AdaptLearnRateKohonenSchema alrks2(5, 0, kp1);
     BOOST_CHECK_EQUAL(int(alrks2.getLearnRate()*1000), 606); 
 }
 

@@ -50,8 +50,9 @@ BOOST_AUTO_TEST_CASE(test_updateWeightVector)
     wv::WeightVectorContEuclidean wv2(arr2);
     wv::AbstractWeightVector* awv2 = &wv2;
     wv::AbstractWeightVector* awv1 = &wv1;
-    alr::AdaptLearnRateKohonenSchema alrks1(5, 4, 10, 5, 1, 10); //0.335
-    alr::AdaptLearnRateKohonenSchema alrks2(5, 0, 10, 5, 1, 10); //0.606
+    alr::KohonenParameters kp(10, 5, 1, 10);
+    alr::AdaptLearnRateKohonenSchema alrks1(5, 4, kp); //0.335
+    alr::AdaptLearnRateKohonenSchema alrks2(5, 0, kp); //0.606
     
     BOOST_CHECK_EQUAL(awv1->updateWeightVector(awv2, &alrks1), true);
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(0)*1000), 328);

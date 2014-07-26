@@ -9,6 +9,10 @@ namespace
 {
     const uint32_t TestNumDimensions = 3;
     const uint32_t TestNumClusters = 5;
+    const double TestSigmaBeg = 0.1;
+    const double TestTSigma = 0.5;
+    const double TestRateBeg = 0.2;
+    const double TestTEnd = 0.3;
 }
 
 class TestKohonenNN: public KohonenNN
@@ -62,7 +66,7 @@ class TestKohonenNN: public KohonenNN
 
 public:
     TestKohonenNN(NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
-    :KohonenNN(false, TestNumClusters, TestNumDimensions, nnit, nt)
+    :KohonenNN(false, TestNumClusters, TestNumDimensions, alr::KohonenParameters(TestSigmaBeg, TestTSigma, TestRateBeg, TestTEnd), nnit, nt)
     {
         initializeNN();        
     }
@@ -86,7 +90,7 @@ public:
 BOOST_AUTO_TEST_SUITE(KohonenNeuralNetwork)
 BOOST_AUTO_TEST_CASE(test_InitializeNN)
 {
-    KohonenNN knn1(5, 3);
+    KohonenNN knn1(5, 3, alr::KohonenParameters(TestSigmaBeg, TestTSigma, TestRateBeg, TestTEnd));
     for (uint32_t j = 0; j < 5; j++)
     {
         wv::AbstractWeightVector* awv = knn1.getNeuron(j).getWv();

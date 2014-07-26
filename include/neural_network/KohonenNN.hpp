@@ -1,6 +1,7 @@
 #ifndef __NEURAL_NETWORK_KOHONEN_NN_HPP__
 #define __NEURAL_NETWORK_KOHONEN_NN_HPP__
 
+#include <adapt_learn_rate/AdaptLearnRateKohonenSchema.hpp>
 #include <container/StaticArray.hpp>
 #include <neuron/KohonenNeuron.hpp>
 
@@ -47,11 +48,11 @@ namespace nn
 
         virtual ~KohonenNN();
 
-        KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
     protected:  
         //only for class-descendant
-        KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
         
         cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
         
@@ -64,9 +65,11 @@ namespace nn
     private:
         uint32_t m_NumClusters;        //Number of clusters equal number of neurons
         uint32_t m_NumDimensions;
+        alr::KohonenParameters m_Kp;
         NetworkInitType m_InitNetType; //Type of network initialization
         neuron::NeuronType m_NeuronType;       //Type of the neuron
         uint32_t m_NumNeuronWinner;
+        uint32_t m_IterNumber;         //Number of training iteration of neural network
 
         void initializeNN(); //init neurons by default weight vectors
     };
