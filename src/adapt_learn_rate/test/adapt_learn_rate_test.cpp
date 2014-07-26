@@ -10,32 +10,32 @@ BOOST_AUTO_TEST_SUITE(AdaptLearnRate)
 BOOST_AUTO_TEST_CASE(test_KohonenSchema)
 {
     alr::KohonenParameters kp1(10, 5, 1, 10);
-    alr::AdaptLearnRateKohonenSchema alrks1(5, 4, kp1);
-    BOOST_CHECK_EQUAL(int(alrks1.getLearnRate()*1000), 335); 
+    alr::AdaptLearnRateKohonenSchema alrks1(5, kp1);
+    BOOST_CHECK_EQUAL(int(alrks1.getLearnRate(4)*1000), 335); 
 
-    alr::AdaptLearnRateKohonenSchema alrks2(5, 0, kp1);
-    BOOST_CHECK_EQUAL(int(alrks2.getLearnRate()*1000), 606); 
+    alr::AdaptLearnRateKohonenSchema alrks2(5, kp1);
+    BOOST_CHECK_EQUAL(int(alrks2.getLearnRate(0)*1000), 606); 
 }
 
 BOOST_AUTO_TEST_CASE(test_NeuronGasSchema)
 {
-    alr::AdaptLearnRateMartines alrm1(5, 0.5, 20, 0.1, 0.01);
-    BOOST_CHECK_EQUAL(int(alrm1.getLearnRate()*1000), 56);
+    alr::AdaptLearnRateMartines alrm1(5, 20, 0.1, 0.01);
+    BOOST_CHECK_EQUAL(int(alrm1.getLearnRate(0.5)*1000), 56);
 
-    alr::AdaptLearnRateMartines alrm2(0, 0.5, 20, 0.1, 0.001);
-    BOOST_CHECK_EQUAL(alrm2.getLearnRate(), 0.1);
+    alr::AdaptLearnRateMartines alrm2(0, 20, 0.1, 0.001);
+    BOOST_CHECK_EQUAL(alrm2.getLearnRate(0.5), 0.1);
     
-    alr::AdaptLearnRateMartines alrm3(20, 0.5, 20, 0.1, 0.001);
-    BOOST_CHECK_EQUAL(alrm3.getLearnRate(), 0.001);
+    alr::AdaptLearnRateMartines alrm3(20, 20, 0.1, 0.001);
+    BOOST_CHECK_EQUAL(alrm3.getLearnRate(0.5), 0.001);
 }
 
 BOOST_AUTO_TEST_CASE(test_SoinnSchema)
 {
-    alr::AdaptLearnRateSoinn alrs1(5, 0, 4);
-    BOOST_CHECK_EQUAL(alrs1.getLearnRate(), 0.25);
+    alr::AdaptLearnRateSoinn alrs1(5, 4);
+    BOOST_CHECK_EQUAL(alrs1.getLearnRate(0), 0.25);
 
-    alr::AdaptLearnRateSoinn alrs2(5, 0.1, 5);
-    BOOST_CHECK_EQUAL(alrs2.getLearnRate(), 0.002);
+    alr::AdaptLearnRateSoinn alrs2(5, 5);
+    BOOST_CHECK_EQUAL(alrs2.getLearnRate(0.1), 0.002);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

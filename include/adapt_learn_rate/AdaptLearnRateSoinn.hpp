@@ -9,13 +9,13 @@ namespace alr //alr => adapt_learn_rate
     class AdaptLearnRateSoinn: public AbstractAdaptLearnRate
     {
     public:
-        virtual double getLearnRate() const
+        virtual double getLearnRate(double distance) const
         {
-            return (m_Distance == 0) ? 1.0 / m_NumWinner : 1.0 / (100 * m_NumWinner);
+            return (distance == 0) ? 1.0 / m_NumWinner : 1.0 / (100 * m_NumWinner);
         }
         
-        AdaptLearnRateSoinn(uint32_t iterNumber, double distance, uint32_t numWinner)
-            : AbstractAdaptLearnRate(iterNumber, distance)
+        AdaptLearnRateSoinn(uint32_t iterNumber, uint32_t numWinner)
+            : AbstractAdaptLearnRate(iterNumber)
             , m_NumWinner(numWinner)
         { } 
     private:

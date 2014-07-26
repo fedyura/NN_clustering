@@ -9,14 +9,14 @@ namespace alr //alr => adapt_learn_rate
     class AdaptLearnRateMartines: public AbstractAdaptLearnRate
     {
     public:
-        virtual double getLearnRate() const
+        virtual double getLearnRate(double distance) const
         {
             return m_RateBegin*pow(m_RateFinal/m_RateBegin, (double)m_IterNumber/(double)m_MaxIterNumber);
         }
         
-        AdaptLearnRateMartines(uint32_t iterNumber, double distance, uint32_t maxItemNumber,
+        AdaptLearnRateMartines(uint32_t iterNumber, uint32_t maxItemNumber,
                                double rateBegin, double rateFinal)
-            : AbstractAdaptLearnRate(iterNumber, distance)
+            : AbstractAdaptLearnRate(iterNumber)
             , m_MaxIterNumber(maxItemNumber)
             , m_RateBegin(rateBegin)
             , m_RateFinal(rateFinal)

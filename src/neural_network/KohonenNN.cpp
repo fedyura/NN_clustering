@@ -29,6 +29,7 @@ namespace nn
         , m_InitNetType(nnit)
         , m_NeuronType(nt)
         , m_NumNeuronWinner(0)
+        , m_IterNumber(0)
     {
         if (m_NumClusters < 2)
             throw std::runtime_error("Can't construct neural network. The number of clusters must be more than 1.");
@@ -90,9 +91,13 @@ namespace nn
         }        
     }
 
-    void KohonenNN::updateWeights()
+    void KohonenNN::updateWeights(const wv::Point* p)
     {
-        
-        
+        alr::AdaptLearnRateKohonenSchema alrks(m_IterNumber, m_Kp);
+        for (uint32_t i = 0; i < m_NumClusters; i++)
+        {
+            neuron::KohonenNeuron& kn = m_Neurons.at(i);
+            kn.getWv()->updateWeightVector(p, &alrks, kn.curPointDist());            
+        }
     }
 }

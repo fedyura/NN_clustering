@@ -9,15 +9,14 @@ namespace alr //alr => adapt_learn_rate
     class AbstractAdaptLearnRate
     {
     public:
-        virtual double getLearnRate() const = 0;
+        //distance parameter is the distance between the neuron winner and updated neuron
+        virtual double getLearnRate(double distance) const = 0;
         
-        AbstractAdaptLearnRate(uint32_t iterNumber, double distance)
+        AbstractAdaptLearnRate(uint32_t iterNumber)
             : m_IterNumber(iterNumber)
-            , m_Distance(distance)
         { } 
     protected:
         uint32_t m_IterNumber; //the number of iteration
-        double m_Distance;     //the distance between neuron winner and updated neuron. Distance is zero if they are matched (if the neuron winner is updated)
     };
 } //alr
 

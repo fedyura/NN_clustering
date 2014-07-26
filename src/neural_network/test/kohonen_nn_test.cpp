@@ -9,10 +9,10 @@ namespace
 {
     const uint32_t TestNumDimensions = 3;
     const uint32_t TestNumClusters = 5;
-    const double TestSigmaBeg = 0.1;
-    const double TestTSigma = 0.5;
-    const double TestRateBeg = 0.2;
-    const double TestTEnd = 0.3;
+    const double TestSigmaBeg = 7;
+    const double TestTSigma = 2;
+    const double TestRateBeg = 1;
+    const double TestTEnd = 0.8;
 }
 
 class TestKohonenNN: public KohonenNN
@@ -74,6 +74,11 @@ public:
     void testFindWinner(const wv::Point* p)
     {
         findWinner(p);
+    }
+
+    void testUpdateWeights(const wv::Point* p)
+    {
+        updateWeights(p);
     }
 
     ~TestKohonenNN()
@@ -184,6 +189,84 @@ BOOST_AUTO_TEST_CASE(test_findWinner)
     BOOST_CHECK_EQUAL(int(tknn.getNeuron(3).curPointDist() * 100), 678);
     BOOST_CHECK_EQUAL(int(tknn.getNeuron(4).curPointDist() * 100), 435);    
     BOOST_CHECK_EQUAL(tknn.numNeuronWinner(), 1);
+}
+
+BOOST_AUTO_TEST_CASE(test_updateWeights)
+{
+    TestKohonenNN tknn;
+    
+    cont::StaticArray<double> arr1(3);
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+    
+    wv::WeightVectorContEuclidean wv1(arr1);
+    
+    //first iteration
+    BOOST_REQUIRE_NO_THROW(tknn.testFindWinner(&wv1));
+    BOOST_REQUIRE_NO_THROW(tknn.testUpdateWeights(&wv1));
+
+    //check concrete values
+    wv::AbstractWeightVector* wv = tknn.getNeuron(0).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 103);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 203);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 303);
+    
+    wv = tknn.getNeuron(1).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 129);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 209);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+
+    wv = tknn.getNeuron(2).getWv();
+    BOOST_CHECK_EQUAL(wv->getConcreteCoord(0), 1);
+    BOOST_CHECK_EQUAL(wv->getConcreteCoord(1), 2);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 239);
+    
+    wv = tknn.getNeuron(3).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 39);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 240);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 239);
+
+    wv = tknn.getNeuron(4).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 202);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 148);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 223);
+    
+    //second iteration
+    cont::StaticArray<double> arr2(3);
+    arr2[0] = 4;
+    arr2[1] = 3;
+    arr2[2] = 3;
+    wv::WeightVectorContEuclidean wv2(arr2);
+    
+    BOOST_REQUIRE_NO_THROW(tknn.testFindWinner(&wv2));
+    BOOST_REQUIRE_NO_THROW(tknn.testUpdateWeights(&wv2));
+    
+    //check concrete values
+    wv = tknn.getNeuron(0).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 371);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 290);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+    
+    wv = tknn.getNeuron(1).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 378);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 292);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+
+    wv = tknn.getNeuron(2).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 369);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 289);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 293);
+    
+    wv = tknn.getNeuron(3).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 352);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 292);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 292);
+
+    wv = tknn.getNeuron(4).getWv();
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 386);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 289);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 294);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

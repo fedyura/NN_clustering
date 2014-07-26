@@ -58,7 +58,7 @@ namespace nn
         
         //methods described network algorithm. It might be overrided in derived class  
         void findWinner(const wv::Point* p);
-        void updateWeights();
+        void updateWeights(const wv::Point* p);
         void train();
         void getMapError();
     

@@ -46,13 +46,13 @@ namespace alr //alr => adapt_learn_rate
     class AdaptLearnRateKohonenSchema: public AbstractAdaptLearnRate
     {
     public:
-        virtual double getLearnRate() const
+        virtual double getLearnRate(double distance) const
         {
-            return getNeighbourCoeff(m_IterNumber, m_Distance)*getLearningRateCoeff(m_IterNumber);
+            return getNeighbourCoeff(m_IterNumber, distance)*getLearningRateCoeff(m_IterNumber);
         }
 
-        AdaptLearnRateKohonenSchema(uint32_t iterNumber, double distance, KohonenParameters kp)
-            : AbstractAdaptLearnRate(iterNumber, distance)
+        AdaptLearnRateKohonenSchema(uint32_t iterNumber, KohonenParameters kp)
+            : AbstractAdaptLearnRate(iterNumber)
             , m_Kp(kp)
         { }
     

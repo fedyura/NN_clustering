@@ -3,6 +3,8 @@
 #include <typeinfo>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
+#include <iostream>
+
 namespace wv
 {
     double WeightVectorContEuclidean::calcDistance(const Point* p) const
@@ -30,7 +32,8 @@ namespace wv
         return sqrt(dist);
     }
 
-    int WeightVectorContEuclidean::updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr)
+    //distance - distance between neuron winner and point p
+    bool WeightVectorContEuclidean::updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr, double distance)
     {
         uint32_t size = getNumDimensions();
         if (strcmp(typeid(*p).name(), typeid(*this).name()) != 0)
@@ -38,7 +41,7 @@ namespace wv
         if (size != p->getNumDimensions())
             throw std::runtime_error("Wrong number of point dimension"); 
         
-        double rate = alr->getLearnRate(), diff = 0;
+        double rate = alr->getLearnRate(distance), diff = 0;
         try
         {
             for (uint32_t i = 0; i < size; i++)
