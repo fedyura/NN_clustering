@@ -50,6 +50,9 @@ namespace nn
 
         KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
+        void trainNetwork(const std::vector<wv::Point>& points, double epsilon);
+        uint32_t getCluster(const wv::Point* p);
+
     protected:  
         //only for class-descendant
         KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
@@ -59,7 +62,9 @@ namespace nn
         //methods described network algorithm. It might be overrided in derived class  
         void findWinner(const wv::Point* p);
         void updateWeights(const wv::Point* p);
-        void train();
+        
+        //return true if we need to continue training, false - otherwise
+        bool trainOneEpoch(const std::vector<wv::Point>& points, double epsilon);
         void getMapError();
     
     private:
@@ -70,6 +75,7 @@ namespace nn
         neuron::NeuronType m_NeuronType;       //Type of the neuron
         uint32_t m_NumNeuronWinner;
         uint32_t m_IterNumber;         //Number of training iteration of neural network
+        double summary_error;          //Summary error during weight updating. It reduces on each iteration
 
         void initializeNN(); //init neurons by default weight vectors
     };

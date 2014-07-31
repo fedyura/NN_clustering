@@ -206,31 +206,36 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
     BOOST_REQUIRE_NO_THROW(tknn.testFindWinner(&wv1));
     BOOST_REQUIRE_NO_THROW(tknn.testUpdateWeights(&wv1));
 
-    //check concrete values
+    //check concrete values and offset of each neuron
     wv::AbstractWeightVector* wv = tknn.getNeuron(0).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 103);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 203);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 303);
+    //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 300);
     
     wv = tknn.getNeuron(1).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 129);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 209);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+    //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 1000);
 
     wv = tknn.getNeuron(2).getWv();
     BOOST_CHECK_EQUAL(wv->getConcreteCoord(0), 1);
     BOOST_CHECK_EQUAL(wv->getConcreteCoord(1), 2);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 239);
+    //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 1600);
     
     wv = tknn.getNeuron(3).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 39);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 240);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 239);
+    //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 2200);
 
     wv = tknn.getNeuron(4).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 202);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 148);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 223);
+    //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 2900);
     
     //second iteration
     cont::StaticArray<double> arr2(3);
@@ -247,26 +252,39 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 371);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 290);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 395);
     
     wv = tknn.getNeuron(1).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 378);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 292);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 5);
 
     wv = tknn.getNeuron(2).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 369);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 289);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 293);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 2361);
     
     wv = tknn.getNeuron(3).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 352);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 292);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 292);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 4027);
 
     wv = tknn.getNeuron(4).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 386);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 289);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 294);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 1837);
+
+    for (uint32_t i = 0; i < TestNumClusters; i++)
+        tknn.getNeuron(i).getWv()->eraseOffset();
+    
+    double summary_offset_value = 0;
+    for (uint32_t i = 0; i < TestNumClusters; i++)
+        summary_offset_value += tknn.getNeuron(i).getWv()->getOffsetValue();
+    BOOST_CHECK_EQUAL(summary_offset_value, 0);    
 }
 
 BOOST_AUTO_TEST_SUITE_END()

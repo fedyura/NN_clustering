@@ -19,11 +19,14 @@ namespace wv //wv => weight_vector
         virtual double calcDistance(const Point* p) const = 0;
         
         //Update weight vector in the one training iteration. Return false if error
-        virtual bool updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr, double distance) = 0;
+        virtual void updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr, double distance) = 0;
 
         //Get concrete coord
         virtual double getConcreteCoord(uint32_t number) const = 0;
         virtual uint32_t getNumDimensions() const = 0;
+
+        virtual void eraseOffset() = 0;
+        virtual double getOffsetValue() const = 0;
         
         virtual ~AbstractWeightVector() { };
     };

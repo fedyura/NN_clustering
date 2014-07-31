@@ -100,4 +100,38 @@ namespace nn
             kn.getWv()->updateWeightVector(p, &alrks, kn.curPointDist());            
         }
     }
+
+    //return true if we need to continue training, false - otherwise
+    bool KohonenNN::trainOneEpoch(const std::vector<wv::Point>& points, double epsilon)
+    {
+        //Erase offset vector
+        for (uint32_t i = 0; i < m_NumClusters; i++)
+            m_Neurons.at(i).getWv()->eraseOffset();
+
+        //make iteration
+        for (const wv::Point& p: points)
+        {
+            findWinner(&p);
+            updateWeights(&p);
+        }
+        
+        //check offset value
+        double summary_offset_value = 0;
+        for (uint32_t i = 0; i < m_NumClusters; i++)
+            summary_offset_value += m_Neurons.at(i).getWv()->getOffsetValue();
+        
+        return (summary_offset_value / m_NumClusters > epsilon);    
+    }
+
+    void KohonenNN::trainNetwork(const std::vector<wv::Point>& points, double epsilon)
+    {
+        while (trainOneEpoch(points, epsilon))
+        { }
+    }
+
+    uint32_t KohonenNN::getCluster(const wv::Point* p)
+    {
+        findWinner(p);
+        return m_NumNeuronWinner;
+    }
 }

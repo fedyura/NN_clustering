@@ -33,7 +33,7 @@ namespace wv
     }
 
     //distance - distance between neuron winner and point p
-    bool WeightVectorContEuclidean::updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr, double distance)
+    void WeightVectorContEuclidean::updateWeightVector(const Point* p, const alr::AbstractAdaptLearnRate* alr, double distance)
     {
         uint32_t size = getNumDimensions();
         if (strcmp(typeid(*p).name(), typeid(*this).name()) != 0)
@@ -47,13 +47,27 @@ namespace wv
             for (uint32_t i = 0; i < size; i++)
             {
                 diff = (p->getConcreteCoord(i) - getConcreteCoord(i));
-                m_Coords[i] += rate * diff;  
+                m_Coords[i] += rate * diff;
+                m_Offset[i] += rate * diff;  
             }
         }
         catch (std::exception& ex)
         {
             throw std::exception();
         }
-        return true;
+    }
+
+    void WeightVectorContEuclidean::eraseOffset()
+    {
+        for (uint32_t i = 0; i < m_Offset.size(); i++)
+            m_Offset[i] = 0;
+    }
+    
+    double WeightVectorContEuclidean::getOffsetValue() const 
+    {
+        double value = 0;
+        for (uint32_t i = 0; i < m_Offset.size(); i++)
+            value += m_Offset[i] * m_Offset[i];
+        return value;    
     }
 } //wv
