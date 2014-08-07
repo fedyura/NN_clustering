@@ -3,6 +3,7 @@
 
 #include <adapt_learn_rate/AdaptLearnRateKohonenSchema.hpp>
 #include <container/StaticArray.hpp>
+#include <memory>
 #include <neuron/KohonenNeuron.hpp>
 
 namespace nn
@@ -46,31 +47,39 @@ namespace nn
             return m_NumNeuronWinner;
         }
 
+        uint32_t iterNumber()
+        {
+            return m_IterNumber; 
+        }
+
         virtual ~KohonenNN();
 
         KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
-        void trainNetwork(const std::vector<wv::Point>& points, double epsilon);
+        void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
         uint32_t getCluster(const wv::Point* p);
+
+    //because this atributes is necessary for some atributes in protected area
+    private:
+        uint32_t m_NumClusters;        //Number of clusters equal number of neurons
+        uint32_t m_NumDimensions;
 
     protected:  
         //only for class-descendant
         KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
         
+        alr::KohonenParameters m_Kp;
         cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
         
         //methods described network algorithm. It might be overrided in derived class  
         void findWinner(const wv::Point* p);
-        void updateWeights(const wv::Point* p);
+        void updateWeights(const wv::Point* p, const alr::AbstractAdaptLearnRate* alr);
         
         //return true if we need to continue training, false - otherwise
-        bool trainOneEpoch(const std::vector<wv::Point>& points, double epsilon);
+        bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
         void getMapError();
     
     private:
-        uint32_t m_NumClusters;        //Number of clusters equal number of neurons
-        uint32_t m_NumDimensions;
-        alr::KohonenParameters m_Kp;
         NetworkInitType m_InitNetType; //Type of network initialization
         neuron::NeuronType m_NeuronType;       //Type of the neuron
         uint32_t m_NumNeuronWinner;

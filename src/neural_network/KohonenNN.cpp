@@ -1,4 +1,5 @@
 #include <ctime>
+#include <iostream>
 #include <neural_network/KohonenNN.hpp>
 #include <memory>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
@@ -45,8 +46,11 @@ namespace nn
         
         for (uint32_t i = 0; i < neurons.size(); i++)
         {
-            for (uint32_t i = 0; i < m_NumDimensions; i++)
-                coords[i] = ((double) rand() / (RAND_MAX));
+            for (uint32_t j = 0; j < m_NumDimensions; j++)
+            {
+                coords[j] = ((double) rand() / (RAND_MAX));
+                std::cout << i << " neuron " << j << " coord " << coords[j] << std::endl;
+            }
             
             switch(m_NeuronType)
             {
@@ -91,42 +95,56 @@ namespace nn
         }        
     }
 
-    void KohonenNN::updateWeights(const wv::Point* p)
+    void KohonenNN::updateWeights(const wv::Point* p, const alr::AbstractAdaptLearnRate* alr)
     {
-        alr::AdaptLearnRateKohonenSchema alrks(m_IterNumber, m_Kp);
-        for (uint32_t i = 0; i < m_NumClusters; i++)
-        {
-            neuron::KohonenNeuron& kn = m_Neurons.at(i);
-            kn.getWv()->updateWeightVector(p, &alrks, kn.curPointDist());            
-        }
+        //alr::AdaptLearnRateKohonenSchema alrks(m_IterNumber, m_Kp);
+        //std::cout << "Point coords " << p->getConcreteCoord(0) << " " << p->getConcreteCoord(1) << " " << p->getConcreteCoord(2) << " " << p->getConcreteCoord(3) << std::endl;
+        //for (uint32_t i = 0; i < m_NumClusters; i++)
+        //{
+            neuron::KohonenNeuron& kn = m_Neurons.at(m_NumNeuronWinner);
+            std::cout << kn.getWv()->getConcreteCoord(0) << " " << kn.getWv()->getConcreteCoord(1) << " " << kn.getWv()->getConcreteCoord(2) << " " << kn.getWv()->getConcreteCoord(3) << std::endl;
+            std::cout << m_NumNeuronWinner << " neuron number. dist = " << kn.curPointDist() << std::endl;
+            std::cout << "Training coefficient " << alr->getLearnRate(kn.curPointDist()) << std::endl;
+            kn.getWv()->updateWeightVector(p, alr, kn.curPointDist());            
+        //}
     }
 
     //return true if we need to continue training, false - otherwise
-    bool KohonenNN::trainOneEpoch(const std::vector<wv::Point>& points, double epsilon)
+    bool KohonenNN::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
     {
         //Erase offset vector
         for (uint32_t i = 0; i < m_NumClusters; i++)
             m_Neurons.at(i).getWv()->eraseOffset();
 
+        std::cout << "Iter Number " << m_IterNumber << std::endl;
+        alr::AdaptLearnRateKohonenSchema alrks(m_IterNumber, m_Kp);
         //make iteration
-        for (const wv::Point& p: points)
+        for (const auto p: points)
         {
-            findWinner(&p);
-            updateWeights(&p);
+            findWinner(p.get());
+            updateWeights(p.get(), &alrks);
         }
         
+        std::cout << std::endl;
         //check offset value
         double summary_offset_value = 0;
         for (uint32_t i = 0; i < m_NumClusters; i++)
+        {
+            std::cout << summary_offset_value << std::endl;
             summary_offset_value += m_Neurons.at(i).getWv()->getOffsetValue();
+        }
         
         return (summary_offset_value / m_NumClusters > epsilon);    
     }
 
-    void KohonenNN::trainNetwork(const std::vector<wv::Point>& points, double epsilon)
+    void KohonenNN::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
     {
+        uint32_t i = 0;
         while (trainOneEpoch(points, epsilon))
-        { }
+        {
+            std::cout << i << " iteration" << std::endl;
+            i++;
+        }
     }
 
     uint32_t KohonenNN::getCluster(const wv::Point* p)

@@ -78,7 +78,8 @@ public:
 
     void testUpdateWeights(const wv::Point* p)
     {
-        updateWeights(p);
+        alr::AdaptLearnRateKohonenSchema alrks(iterNumber(), m_Kp);
+        updateWeights(p, &alrks);
     }
 
     ~TestKohonenNN()
