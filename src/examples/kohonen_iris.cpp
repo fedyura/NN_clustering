@@ -97,22 +97,12 @@ int main (int argc, char* argv[])
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
+        
+    //0x3x14
+    alr::KohonenParameters kp(0.4, 1.5, 0.9, 1.3);
+    nn::KohonenNN knn(NumClustersIrisDataSet, NumDimensionsIrisDataSet, kp, 0); 
 
-    /*
-    for (const auto p: points)
-    {
-        for (uint32_t i = 0; i < NumDimensionsIrisDataSet; i++)
-        {
-            std::cout << p->getConcreteCoord(i) << " ";
-        }
-        std::cout << std::endl;
-    }
-    */
-    
-    alr::KohonenParameters kp(1, 1.2, 0.5, 1.2);
-    nn::KohonenNN knn(NumClustersIrisDataSet, NumDimensionsIrisDataSet, kp); 
-
-    knn.trainNetwork(points, 0.1);
+    knn.trainNetwork(points, 0.000001);
     
     for (const auto p: points)
     {
@@ -120,18 +110,5 @@ int main (int argc, char* argv[])
     }    
     
     std::cout << std::endl;
-
-    
-    /*
-    for (uint32_t i = 0; i < points.size(); i++)
-    {
-        for (uint32_t j = 0; j < points[i]->getNumDimensions(); j++)
-        {
-            std::cout << points[i]->getConcreteCoord(j) << " ";
-        }
-        std::cout << answers[i] << std::endl;
-    }
-    */
-    
     return 0;
 }

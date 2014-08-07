@@ -9,6 +9,7 @@ namespace
 {
     const uint32_t TestNumDimensions = 3;
     const uint32_t TestNumClusters = 5;
+    const uint32_t TestNumMinPotentials = 0;
     const double TestSigmaBeg = 7;
     const double TestTSigma = 2;
     const double TestRateBeg = 1;
@@ -51,7 +52,7 @@ class TestKohonenNN: public KohonenNN
                 {
                     wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords[i]);  
                     //delete[] neurons;
-                    neurons[i] = neuron::KohonenNeuron(sWeightVector); //create neurons 
+                    neurons[i] = neuron::KohonenNeuron(sWeightVector, m_MinPotential); //create neurons 
                     break;
                 }
                 default:
@@ -66,7 +67,7 @@ class TestKohonenNN: public KohonenNN
 
 public:
     TestKohonenNN(NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
-    :KohonenNN(false, TestNumClusters, TestNumDimensions, alr::KohonenParameters(TestSigmaBeg, TestTSigma, TestRateBeg, TestTEnd), nnit, nt)
+    :KohonenNN(false, TestNumClusters, TestNumDimensions, alr::KohonenParameters(TestSigmaBeg, TestTSigma, TestRateBeg, TestTEnd), TestNumMinPotentials, nnit, nt)
     {
         initializeNN();        
     }
@@ -209,9 +210,9 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
 
     //check concrete values and offset of each neuron
     wv::AbstractWeightVector* wv = tknn.getNeuron(0).getWv();
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 103);
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 203);
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 303);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 100);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 200);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
     //BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 300);
     
     wv = tknn.getNeuron(1).getWv();

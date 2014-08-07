@@ -54,7 +54,7 @@ namespace nn
 
         virtual ~KohonenNN();
 
-        KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, double min_potential = 0, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
         void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
         uint32_t getCluster(const wv::Point* p);
@@ -66,9 +66,10 @@ namespace nn
 
     protected:  
         //only for class-descendant
-        KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        KohonenNN(bool is_initialized, uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, double min_potential = 0, NetworkInitType nnit = NetworkInitType::RANDOM, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
         
         alr::KohonenParameters m_Kp;
+        double m_MinPotential;         //Minimal value of neuron potential that neuron may be winner
         cont::StaticArray<neuron::KohonenNeuron> m_Neurons;
         
         //methods described network algorithm. It might be overrided in derived class  
@@ -84,7 +85,7 @@ namespace nn
         neuron::NeuronType m_NeuronType;       //Type of the neuron
         uint32_t m_NumNeuronWinner;
         uint32_t m_IterNumber;         //Number of training iteration of neural network
-        double summary_error;          //Summary error during weight updating. It reduces on each iteration
+        //double summary_error;          //Summary error during weight updating. It reduces on each iteration
 
         void initializeNN(); //init neurons by default weight vectors
     };

@@ -14,8 +14,8 @@ namespace neuron
     {
     public:
         AbstractNeuron(wv::AbstractWeightVector *wv)
-            :m_wv(wv)
-            ,m_CurPointDist(-1)
+            : m_wv(wv)
+            , m_CurPointDist(-1)
         { }
         
         wv::AbstractWeightVector* getWv()
@@ -42,7 +42,7 @@ namespace neuron
 
     protected:
         wv::AbstractWeightVector* m_wv = NULL;
-        double m_CurPointDist; //distance to the current point         
+        double m_CurPointDist; //distance to the current point (or to neuron winner)        
     };
 } //neuron
 
