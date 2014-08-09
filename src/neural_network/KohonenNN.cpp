@@ -103,15 +103,20 @@ namespace nn
 
     void KohonenNN::updateWeights(const wv::Point* p, const alr::AbstractAdaptLearnRate* alr)
     {
+        //update neuron winner
+        neuron::KohonenNeuron& kn = m_Neurons.at(m_NumNeuronWinner);
+        kn.getWv()->updateWeightVector(p, alr, kn.setCurPointDist(m_Neurons.at(m_NumNeuronWinner).getWv()));
+        kn.decreasePotential();
+        
+        //update other neurons
         for (uint32_t i = 0; i < m_NumClusters; i++)
         {
+            if (i == m_NumNeuronWinner)
+                continue;
+            
             neuron::KohonenNeuron& kn = m_Neurons.at(i);
             kn.getWv()->updateWeightVector(p, alr, kn.setCurPointDist(m_Neurons.at(m_NumNeuronWinner).getWv()));
-            
-            if (i != m_NumNeuronWinner)
-                m_Neurons.at(i).increasePotential(m_NumClusters);
-            else
-                m_Neurons.at(i).decreasePotential();
+            kn.increasePotential(m_NumClusters);
         }
     }
 

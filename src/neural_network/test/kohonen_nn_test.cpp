@@ -206,6 +206,7 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
     
     //first iteration
     BOOST_REQUIRE_NO_THROW(tknn.testFindWinner(&wv1));
+    std::cout << "Before update weights" << std::endl;
     BOOST_REQUIRE_NO_THROW(tknn.testUpdateWeights(&wv1));
 
     //check concrete values and offset of each neuron
@@ -251,10 +252,10 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
     
     //check concrete values
     wv = tknn.getNeuron(0).getWv();
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 371);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 370);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 290);
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
-    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 395);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 393);
     
     wv = tknn.getNeuron(1).getWv();
     BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 378);
@@ -275,10 +276,10 @@ BOOST_AUTO_TEST_CASE(test_updateWeights)
     BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 4027);
 
     wv = tknn.getNeuron(4).getWv();
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 386);
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 289);
-    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 294);
-    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 1837);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(0)*100), 400);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(1)*100), 300);
+    BOOST_CHECK_EQUAL(int(wv->getConcreteCoord(2)*100), 300);
+    BOOST_CHECK_EQUAL(int(wv->getOffsetValue()*100), 1900);
 
     for (uint32_t i = 0; i < TestNumClusters; i++)
         tknn.getNeuron(i).getWv()->eraseOffset();
