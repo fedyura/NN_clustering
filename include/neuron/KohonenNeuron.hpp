@@ -2,7 +2,6 @@
 #define __NEURON_KOHONEN_NEURON_HPP__
 
 #include <neuron/AbstractNeuron.hpp>
-#include <memory>
 
 namespace neuron
 {
