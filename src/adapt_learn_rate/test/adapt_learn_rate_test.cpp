@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include <adapt_learn_rate/AdaptLearnRateSoinn.hpp>
-#include <adapt_learn_rate/AdaptLearnRateMartines.hpp>
+#include <adapt_learn_rate/AdaptLearnRateNeuralGas.hpp>
 #include <adapt_learn_rate/AdaptLearnRateKohonenSchema.hpp>
 
 using namespace boost::unit_test;
@@ -19,14 +19,9 @@ BOOST_AUTO_TEST_CASE(test_KohonenSchema)
 
 BOOST_AUTO_TEST_CASE(test_NeuronGasSchema)
 {
-    alr::AdaptLearnRateMartines alrm1(5, 20, 0.1, 0.01);
-    BOOST_CHECK_EQUAL(int(alrm1.getLearnRate(0.5)*1000), 56);
-
-    alr::AdaptLearnRateMartines alrm2(0, 20, 0.1, 0.001);
-    BOOST_CHECK_EQUAL(alrm2.getLearnRate(0.5), 0.1);
-    
-    alr::AdaptLearnRateMartines alrm3(20, 20, 0.1, 0.001);
-    BOOST_CHECK_EQUAL(alrm3.getLearnRate(0.5), 0.001);
+    alr::AdaptLearnRateNeuralGas alrng1(5, 0.1, 0.01);
+    BOOST_CHECK_EQUAL(int(alrng1.getLearnRate(0.5)*1000), 10);
+    BOOST_CHECK_EQUAL(int(alrng1.getLearnRate(0)*1000), 100);
 }
 
 BOOST_AUTO_TEST_CASE(test_SoinnSchema)

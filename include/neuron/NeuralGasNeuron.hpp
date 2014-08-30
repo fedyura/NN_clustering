@@ -21,7 +21,7 @@ namespace neuron
         
         void updateError()
         {
-            m_Error += m_CurPointDist;
+            m_Error += m_CurPointDist*m_CurPointDist;
         }
         
         //increment age of edges for this neuron and return vector of neighbours
@@ -61,7 +61,7 @@ namespace neuron
             }
         }
         
-        std::vector<uint32_t> getNeighbours()
+        std::vector<uint32_t> getNeighbours() const
         {
             std::vector<uint32_t> neighbours;
             for (auto& s: m_Neighbours)
@@ -79,7 +79,7 @@ namespace neuron
             m_Neighbours.erase(it);
         }
 
-        double error()
+        double error() const
         {
             return m_Error;
         }
