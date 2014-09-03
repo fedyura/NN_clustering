@@ -18,7 +18,7 @@ namespace neuron
             , m_CurPointDist(-1)
         { }
         
-        wv::AbstractWeightVector* getWv()
+        wv::AbstractWeightVector* getWv() const
         {
             return m_wv;
         }

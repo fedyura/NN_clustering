@@ -1,5 +1,6 @@
 #include <adapt_learn_rate/AdaptLearnRateNeuralGas.hpp>
 #include <algorithm>
+#include <iostream>
 #include <neural_network/NeuralGas.hpp>
 
 namespace nn
@@ -21,7 +22,7 @@ namespace nn
             throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
     }
 
-    void NeuralGas::initialize(const std::pair<std::shared_ptr<wv::Point>, std::shared_ptr<wv::Point>>& points)
+    void NeuralGas::initialize(const std::pair<wv::Point*, wv::Point*>& points)
     {
         if (m_NumDimensions != points.first->getNumDimensions())
             throw std::runtime_error("Number of dimensions for data doesn't correspond dimension of neural network");
@@ -63,8 +64,8 @@ namespace nn
             {
                 min_dist_sec = min_dist_main;
                 min_dist_main = cur_dist;
-                m_NumWinner = i;
                 m_NumSecondWinner = m_NumWinner;
+                m_NumWinner = i;
             }
             else if (cur_dist < min_dist_sec)
             {
@@ -106,7 +107,7 @@ namespace nn
     void NeuralGas::insertNode()
     {
         //find neuron with max local error
-        double max_error = 0, cur_error = 0;
+        double max_error = -1, cur_error = 0;
         uint32_t num_neuron_max_err = 0;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
@@ -120,7 +121,7 @@ namespace nn
         
         //find its neighbour with max local error
         std::vector<uint32_t> neighbours = m_Neurons[num_neuron_max_err].getNeighbours();
-        max_error = 0, cur_error = 0;
+        max_error = -1, cur_error = 0;
         uint32_t num_sec_neuron_max_err = 0;
         for (const uint32_t s: neighbours)
         {
@@ -160,7 +161,7 @@ namespace nn
             s.changeError(m_Betta);
     }
 
-    bool NeuralGas::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    bool NeuralGas::trainOneEpoch(const std::vector<wv::Point*>& points, double epsilon)
     {
         //create vector with order of iterating by points
         std::vector<uint32_t> order;
@@ -174,8 +175,8 @@ namespace nn
 
         for (uint32_t i = 0; i < order.size(); i++)
         {
-            findWinners(points[order[i]].get());
-            updateWeights(points[order[i]].get(), &alrn);
+            findWinners(points[order[i]]);
+            updateWeights(points[order[i]], &alrn);
             incrementEdgeAgeFromWinner();
             updateEdgeWinSecWin();
             deleteOldEdges();
@@ -186,7 +187,6 @@ namespace nn
             decreaseAllErrors();
             iteration++;
         }
-
         return (error_before - getErrorOnNeuron() > epsilon);
     }
 
@@ -198,12 +198,10 @@ namespace nn
         return error/m_Neurons.size();
     }
 
-    void NeuralGas::train(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    void NeuralGas::train(const std::vector<wv::Point*>& points, double epsilon)
     {
         initialize(std::make_pair(points[points.size()/3], points[points.size()*2/3]));
         while (trainOneEpoch(points, epsilon))
         { }
     }
-
-    
 }
