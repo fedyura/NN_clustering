@@ -17,8 +17,10 @@ namespace nn
     public:
         NeuralGas(uint32_t num_dimensions, double adaptLearnRateWinner, double adaptLearnRateNotWinner, double alpha, double betta, double age_max, uint32_t lambda, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
 
-        void train(const std::vector<wv::Point*>& points, double epsilon);
-
+        void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        void exportEdgesFile(const std::string& filename) const;
+        uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
+        
         //functions for testing
         double getNeuronError(uint32_t i) const
         {
@@ -81,7 +83,7 @@ namespace nn
         uint32_t m_NumSecondWinner;
 
         //return true if we need to continue training, false - otherwise
-        bool trainOneEpoch(const std::vector<wv::Point*>& points, double epsilon);
+        bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
     };
 }
 

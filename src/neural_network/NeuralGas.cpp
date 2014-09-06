@@ -1,5 +1,6 @@
 #include <adapt_learn_rate/AdaptLearnRateNeuralGas.hpp>
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <neural_network/NeuralGas.hpp>
 
@@ -89,7 +90,9 @@ namespace nn
         std::vector<uint32_t> neighbours = m_Neurons[m_NumWinner].incrementEdgesAge();
         //update edges incoming into winner
         for (const uint32_t num: neighbours)
+        {
             m_Neurons[num].incrementConcreteEdgeAge(m_NumWinner);
+        }
     }
 
     void NeuralGas::updateEdgeWinSecWin()
@@ -161,7 +164,7 @@ namespace nn
             s.changeError(m_Betta);
     }
 
-    bool NeuralGas::trainOneEpoch(const std::vector<wv::Point*>& points, double epsilon)
+    bool NeuralGas::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
     {
         //create vector with order of iterating by points
         std::vector<uint32_t> order;
@@ -175,18 +178,25 @@ namespace nn
 
         for (uint32_t i = 0; i < order.size(); i++)
         {
-            findWinners(points[order[i]]);
-            updateWeights(points[order[i]], &alrn);
+            findWinners(points[order[i]].get());
+            updateWeights(points[order[i]].get(), &alrn);
             incrementEdgeAgeFromWinner();
             updateEdgeWinSecWin();
             deleteOldEdges();
             
             if (iteration % m_Lambda == 0)
-                insertNode();
+            {
+                insertNode(); 
+            }
             
             decreaseAllErrors();
             iteration++;
         }
+        double error_after = getErrorOnNeuron();
+        
+        std::cout << "Error before = " << error_before << " Error after = " << error_after << std::endl;
+        std::cout << "Network size: " << m_Neurons.size() << " neurons" << std::endl;
+        
         return (error_before - getErrorOnNeuron() > epsilon);
     }
 
@@ -195,13 +205,68 @@ namespace nn
         double error = 0;
         for (const auto& s: m_Neurons)
             error += s.error();
+        if (m_Neurons.size() == 2)
+            error = std::numeric_limits<double>::max()*2;
         return error/m_Neurons.size();
     }
 
-    void NeuralGas::train(const std::vector<wv::Point*>& points, double epsilon)
+    void NeuralGas::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
     {
-        initialize(std::make_pair(points[points.size()/3], points[points.size()*2/3]));
+        initialize(std::make_pair(points[points.size()/3].get(), points[points.size()*2/3].get()));
+        uint32_t iteration = 1;
         while (trainOneEpoch(points, epsilon))
-        { }
+        {
+            std::cout << "----------------------------------------------------------------------" << std::endl;
+            std::cout << "Iteration " << iteration << std::endl;
+            iteration++;
+        }
+    }
+
+    void NeuralGas::exportEdgesFile(const std::string& filename) const
+    {
+        std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second
+        uint32_t edge_weight = 1;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            std::vector<uint32_t> neighbour = m_Neurons[i].getNeighbours();
+            uint64_t key = 0;
+            for (uint32_t neigh: neighbour)
+            {
+                key = (i < neigh) ? neigh : i;
+                key = key << 32;
+                key += (i < neigh) ? i : neigh;
+                edges.emplace(key, 1);
+            }
+        }
+
+        //print edges in file
+        std::ofstream out(filename, std::ios::out);
+        for (const auto s: edges)
+        {
+            uint64_t key = s.first; 
+            out << (key & 0x00000000FFFFFFFF) << " ";
+            key = key >> 32;
+            out << (key & 0x00000000FFFFFFFF) << " " << edge_weight << std::endl;
+        }
+
+        out.close();
+    }
+
+    //find cluster for each point for built network
+    uint32_t NeuralGas::findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const
+    {
+        double min_dist_main = std::numeric_limits<double>::max();
+        double cur_dist = 0;
+        uint32_t winner = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            cur_dist = m_Neurons[i].getWv()->calcDistance(p);       
+            if (cur_dist < min_dist_main)
+            {
+                min_dist_main = cur_dist;
+                winner = i;
+            }
+        }
+        return neuron_cluster.at(winner);
     }
 }

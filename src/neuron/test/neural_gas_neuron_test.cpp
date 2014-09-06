@@ -69,7 +69,9 @@ BOOST_AUTO_TEST_CASE(test_NeuronNeighbours)
     //Edge 6 must be deleted
     ngn.deleteOldEdges(4);
     neighbours = ngn.incrementEdgesAge();
+    std::sort(neighbours.begin(), neighbours.end());
     BOOST_CHECK_EQUAL(neighbours[0], 3);
+    BOOST_CHECK_EQUAL(neighbours[1], 6);
 }
 
 BOOST_AUTO_TEST_CASE(test_NeuronError)

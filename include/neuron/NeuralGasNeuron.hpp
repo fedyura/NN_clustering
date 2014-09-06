@@ -75,7 +75,7 @@ namespace neuron
             if (it == m_Neighbours.end()) 
                 throw std::runtime_error("Error in replaceNeighbour function. Old edge doesn't exist");
             
-            m_Neighbours.emplace(number_new, it->second);
+            m_Neighbours.emplace(number_new, 0);  //it->second (if set old value)
             m_Neighbours.erase(it);
         }
 
