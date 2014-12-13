@@ -1,11 +1,14 @@
 #include <adapt_learn_rate/AdaptLearnRateNeuralGas.hpp>
 #include <algorithm>
+#include <boost/format.hpp>
 #include <fstream>
-#include <iostream>
+#include <logger/logger.hpp>
 #include <neural_network/NeuralGas.hpp>
 
 namespace nn
 {
+    logger::ConcreteLogger* log_netw = logger::Logger::getLog("NeuralGas");
+    
     NeuralGas::NeuralGas(uint32_t num_dimensions, double adaptLearnRateWinner, double adaptLearnRateNotWinner, double alpha, double betta, double age_max, uint32_t lambda, NetworkStopCriterion nnit, neuron::NeuronType nt)
     : m_NumDimensions(num_dimensions)
     , m_AdaptLearnRateWinner(adaptLearnRateNotWinner)
@@ -194,9 +197,8 @@ namespace nn
         }
         double error_after = getErrorOnNeuron();
         
-        std::cout << "Error before = " << error_before << " Error after = " << error_after << std::endl;
-        std::cout << "Network size: " << m_Neurons.size() << " neurons" << std::endl;
-        
+        log_netw->info((boost::format("Error before %g. Error after %g") % error_before % error_after).str());
+        log_netw->info((boost::format("Network size: %d neurons") % m_Neurons.size()).str()); 
         return (error_before - getErrorOnNeuron() > epsilon);
     }
 
@@ -205,6 +207,7 @@ namespace nn
         double error = 0;
         for (const auto& s: m_Neurons)
             error += s.error();
+        //set max error for initial network of two neurons
         if (m_Neurons.size() == 2)
             error = std::numeric_limits<double>::max()*2;
         return error/m_Neurons.size();
@@ -216,15 +219,15 @@ namespace nn
         uint32_t iteration = 1;
         while (trainOneEpoch(points, epsilon))
         {
-            std::cout << "----------------------------------------------------------------------" << std::endl;
-            std::cout << "Iteration " << iteration << std::endl;
+            log_netw->info("----------------------------------------------------------------------");
+            log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
         }
     }
 
     void NeuralGas::exportEdgesFile(const std::string& filename) const
     {
-        std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second
+        std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second - the older one)
         uint32_t edge_weight = 1;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {

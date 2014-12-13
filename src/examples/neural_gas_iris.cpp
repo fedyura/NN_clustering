@@ -1,10 +1,14 @@
+#include <boost/format.hpp>
 #include <examples/read_data.hpp>
 #include <cmath>
+#include <logger/logger.hpp>
 #include <neural_network/NeuralGas.hpp>
 #include <stdlib.h>
 
 namespace 
 {
+    logger::ConcreteLogger* log_netw = logger::Logger::getLog("NeuralGas");
+    
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
 
     void readMCLAnswer(const std::string& filename)
@@ -32,8 +36,6 @@ namespace
         std::vector<std::shared_ptr<wv::Point>> points;
         std::vector<std::string> answers;
 
-        //std::cout << "Hello world" << std::endl;
-    
         if (!ex::readIrisDataSet("iris_dataset", points, answers))
         {
             std::cerr << "readIrisDataSet function works incorrect" << std::endl;
@@ -65,7 +67,7 @@ int main (int argc, char* argv[])
     std::vector<std::shared_ptr<wv::Point>> points;
     std::vector<std::string> answers;
 
-    std::cout << "Hello world" << std::endl;
+    log_netw->info("Hello world");
     
     if (!ex::readIrisDataSet("iris_dataset", points, answers))
     {
@@ -93,10 +95,10 @@ int main (int argc, char* argv[])
     //define clusters
     for (const auto p: points)
     {
-        std::cout << ng.findPointCluster(p.get(), neuron_clusters);
+        log_netw->info((boost::format("%d") % ng.findPointCluster(p.get(), neuron_clusters)).str(), true);
     }
             
-    std::cout << "The program is successfully ended" << std::endl;
+    log_netw->info("\n", true);
+    log_netw->info("The program is succesfully ended");
     return 0;
-    
 }

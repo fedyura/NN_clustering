@@ -37,7 +37,6 @@ namespace wv //wv => weight_vector
                 m_Offset[i] = 0;
         }
    
-        //~WeightVectorContEuclidean();  //if dynamic array instead of vector
     private:
         cont::StaticArray<double> m_Coords;
         cont::StaticArray<double> m_Offset; //coord offset during the one iteration

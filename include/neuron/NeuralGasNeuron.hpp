@@ -98,6 +98,5 @@ namespace neuron
         double m_Error; //error of neuron
         std::unordered_map<uint32_t, uint32_t> m_Neighbours; //Neigbour number => edge age
     };
-
 }
 #endif //__NEURON_NEURAL_GAS_NEURON

@@ -3,8 +3,6 @@
 #include <typeinfo>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
-#include <iostream>
-
 namespace wv
 {
     double WeightVectorContEuclidean::calcDistance(const Point* p) const

@@ -1,12 +1,16 @@
+#include <boost/format.hpp>
 #include <ctime>
 #include <iostream>
 #include <limits>
+#include <logger/logger.hpp>
 #include <neural_network/KohonenNN.hpp>
 #include <memory>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
 namespace nn
 {
+    logger::ConcreteLogger* log_netw = logger::Logger::getLog("KohonenNetwork");
+
     KohonenNN::KohonenNN(uint32_t num_clusters, uint32_t num_dimensions, alr::KohonenParameters kp, double min_potential, NetworkInitType nnit, neuron::NeuronType nt)
         : m_NumClusters(num_clusters)
         , m_NumDimensions(num_dimensions)
@@ -52,9 +56,9 @@ namespace nn
             for (uint32_t j = 0; j < m_NumDimensions; j++)
             {    
                 coords[j] = ((double) rand() / (RAND_MAX));
-                std::cout << coords[j] << ",";
+                log_netw->debug((boost::format("%g,") % coords[j]).str(), true);
             }
-            std::cout << std::endl;
+            log_netw->debug("\n", true);
             
             switch(m_NeuronType)
             {
@@ -135,7 +139,6 @@ namespace nn
             updateWeights(p.get(), &alrks);
         }
         
-        std::cout << std::endl;
         //check offset value
         double summary_offset_value = 0;
         for (uint32_t i = 0; i < m_NumClusters; i++)
@@ -143,14 +146,14 @@ namespace nn
             summary_offset_value += m_Neurons.at(i).getWv()->getOffsetValue();
         }
 
-        std::cout << " --------------------------------------------------------------------" << std::endl;
-        std::cout << "After " << m_IterNumber << " iteration" << std::endl;        
-        std::cout << "Summary offset value = " << summary_offset_value << std::endl;
+        log_netw->info(" --------------------------------------------------------------------");
+        log_netw->info((boost::format("After %d iteration") % m_IterNumber).str());
+        log_netw->info((boost::format("Summary offset value = %g") % summary_offset_value).str()); 
         for (uint32_t i = 0; i < m_NumClusters; i++)
         {
             for (uint32_t j = 0; j < m_NumDimensions; j++)
-                std::cout << m_Neurons.at(i).getWv()->getConcreteCoord(j) << ",";
-            std::cout << std::endl;
+                log_netw->info((boost::format("%g,") % m_Neurons.at(i).getWv()->getConcreteCoord(j)).str(), true);
+            log_netw->info("\n", true);
         }
         m_IterNumber++;
         return (summary_offset_value / m_NumClusters > epsilon);    
