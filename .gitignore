@@ -2,3 +2,4 @@ build/
 *.tmp
 *.swp
 *.swo
+src/mcl
