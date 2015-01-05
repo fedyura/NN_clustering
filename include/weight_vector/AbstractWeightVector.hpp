@@ -24,9 +24,13 @@ namespace wv //wv => weight_vector
         //Get concrete coord
         virtual double getConcreteCoord(uint32_t number) const = 0;
         virtual uint32_t getNumDimensions() const = 0;
-
+ 
         virtual void eraseOffset() = 0;
         virtual double getOffsetValue() const = 0;
+
+        //Calculate point in the middle between two points and return it
+        //This function allocate memory which it is needed to delete
+        virtual Point* getMiddlePoints(const Point* p) const = 0;
         
         virtual ~AbstractWeightVector() { };
     };

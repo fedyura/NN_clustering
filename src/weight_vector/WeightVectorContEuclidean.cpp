@@ -68,4 +68,19 @@ namespace wv
             value += m_Offset[i] * m_Offset[i];
         return value;    
     }
+
+    Point* WeightVectorContEuclidean::getMiddlePoints(const Point* p) const
+    {
+        uint32_t size = getNumDimensions();
+        if (strcmp(typeid(*p).name(), typeid(*this).name()) != 0)
+            throw std::bad_typeid();
+        if (size != p->getNumDimensions())
+            throw std::runtime_error("Wrong number of point dimension");
+
+        cont::StaticArray<double> coords(size);
+        for (uint32_t i = 0; i < size; i++)
+            coords[i] = (p->getConcreteCoord(i) + getConcreteCoord(i)) / 2.0;
+        
+        return new wv::WeightVectorContEuclidean(coords);        
+    }
 } //wv

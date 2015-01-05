@@ -28,6 +28,10 @@ namespace wv //wv => weight_vector
 
         virtual void eraseOffset();
         virtual double getOffsetValue() const;
+
+        //Calculate point in the middle between two points and return it
+        //This function allocate memory which it is needed to delete
+        virtual Point* getMiddlePoints(const Point* p) const;
         
         explicit WeightVectorContEuclidean(const cont::StaticArray<double>& coords)
             : m_Coords(coords)

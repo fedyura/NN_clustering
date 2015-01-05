@@ -65,4 +65,27 @@ BOOST_AUTO_TEST_CASE(test_updateWeightVector)
     BOOST_CHECK_EQUAL(int(wv1.getConcreteCoord(2)*1000), 2261);
 }
 
+BOOST_AUTO_TEST_CASE(test_getMiddlePoints)
+{
+    cont::StaticArray<double> arr1(3);
+    arr1[0] = 1;
+    arr1[1] = 2;
+    arr1[2] = 3;
+    
+    cont::StaticArray<double> arr2(3);
+    arr2[0] = -1;
+    arr2[1] = 4;
+    arr2[2] = 2;
+
+    wv::WeightVectorContEuclidean wv1(arr1);
+    wv::WeightVectorContEuclidean wv2(arr2);
+    wv::AbstractWeightVector* awv2 = &wv2;
+    wv::AbstractWeightVector* awv1 = &wv1;
+    
+    wv::AbstractWeightVector* aw_res = awv1->getMiddlePoints(awv2);
+    BOOST_CHECK_EQUAL(aw_res->getConcreteCoord(0), 0);
+    BOOST_CHECK_EQUAL(aw_res->getConcreteCoord(1), 3);
+    BOOST_CHECK_EQUAL(aw_res->getConcreteCoord(2), 2.5);
+    delete aw_res;
+}
 BOOST_AUTO_TEST_SUITE_END()
