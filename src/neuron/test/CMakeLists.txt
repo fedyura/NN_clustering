@@ -5,6 +5,7 @@ SET (TARGET_NAME NEURON_TEST)
 ADD_EXECUTABLE (${TARGET_NAME}
     main.cpp
     neural_gas_neuron_test.cpp
+    soinn_neuron_test.cpp
 )
 
 TARGET_LINK_LIBRARIES (${TARGET_NAME}

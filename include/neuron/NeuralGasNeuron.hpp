@@ -9,9 +9,9 @@ namespace neuron
     class NeuralGasNeuron: public AbstractNeuron
     {
     public:
-        NeuralGasNeuron(wv::AbstractWeightVector* wv)
+        NeuralGasNeuron(wv::AbstractWeightVector* wv, double error = 0.0)
             : AbstractNeuron(wv)
-            , m_Error(0)
+            , m_Error(error)
         { }
             
         NeuralGasNeuron()
@@ -92,6 +92,11 @@ namespace neuron
         void changeError(double koeff)
         {
             m_Error = koeff * m_Error;
+        }
+
+        uint32_t getNumNeighbours()
+        {
+            return m_Neighbours.size();
         }
             
     private:
