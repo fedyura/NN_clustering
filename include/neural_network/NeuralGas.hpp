@@ -2,16 +2,12 @@
 #define __NEURAL_NETWORK_NEURAL_GAS_HPP__
 
 #include <memory>
+#include <neural_network/Common.hpp>
 #include <neuron/NeuralGasNeuron.hpp>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
 namespace nn
 {
-    enum NetworkStopCriterion
-    {
-        LOCAL_ERROR = 1
-    };
-
     class NeuralGas
     {
     public:
@@ -47,7 +43,6 @@ namespace nn
             return m_Neurons.at(num);
         }
         
-
         ~NeuralGas();
     
     protected:
