@@ -12,7 +12,7 @@ namespace neuron
         SoinnNeuron(wv::AbstractWeightVector* wv)
           : NeuralGasNeuron(wv)
           , m_Threshold(std::numeric_limits<double>::max())
-          , m_LocalSignals(0)
+          , m_LocalSignals(1)
           , m_ErrorRadius(0)
           , m_IsDeleted(false)
         { }
@@ -20,7 +20,7 @@ namespace neuron
         SoinnNeuron()
           : NeuralGasNeuron(NULL)
           , m_Threshold(std::numeric_limits<double>::max())
-          , m_LocalSignals(0)
+          , m_LocalSignals(1)
           , m_ErrorRadius(0)
           , m_IsDeleted(false)
         { }

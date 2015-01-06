@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(test_NeuronInsertion)
     BOOST_CHECK_EQUAL(sn3.getWv()->getConcreteCoord(2), 5);
     
     BOOST_CHECK_EQUAL(sn3.error(), 1.0);
-    BOOST_CHECK_EQUAL(sn3.localSignals(), 0.75);
-    BOOST_CHECK_EQUAL((int)(sn3.errorRadius()*100 + 0.5), 14);
+    BOOST_CHECK_EQUAL(sn3.localSignals(), 1.25);
+    BOOST_CHECK_EQUAL((int)(sn3.errorRadius()*100 + 0.5), 8);
 
     delete sn3.getWv();
 }

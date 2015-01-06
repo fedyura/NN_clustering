@@ -12,6 +12,39 @@ namespace nn
     {
       public:
         Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);    
+
+        //functions for testing
+        double getNeuronError(uint32_t i) const
+        {
+            return m_Neurons.at(i).error();
+        } 
+
+        double getNeuronCoord(uint32_t num, uint32_t coord) const
+        {
+            return m_Neurons.at(num).getWv()->getConcreteCoord(coord);
+        }
+
+        double getWinner() const
+        {
+            return m_NumWinner;
+        }
+
+        double getSecWinner() const
+        {
+            return m_NumSecondWinner;
+        }
+        
+        neuron::SoinnNeuron getNeuron(int num) const
+        {
+            return m_Neurons.at(num);
+        }
+
+        void incrementLocalSignals(int num)
+        {
+            m_Neurons.at(num).incrementLocalSignals();
+        }
+        
+        ~Soinn();
         
       protected:
         //Initialize network with two points from dataset
@@ -23,7 +56,11 @@ namespace nn
         void updateEdgeWinSecWin();
         void incrementEdgeAgeFromWinner();
         void updateWeights(const wv::Point* p);
-        void deleteOldEdges(); 
+        void deleteOldEdges();
+        
+        //for tests
+        void InsertConcreteNeuron(const wv::Point* p); 
+        void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
       
       private:
         uint32_t m_NumDimensions;

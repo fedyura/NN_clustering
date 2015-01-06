@@ -27,6 +27,16 @@ namespace nn
             throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
     }
 
+    Soinn::~Soinn()
+    {
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+            if (m_Neurons[i].getWv() != NULL)
+            {
+                delete m_Neurons[i].getWv();
+                m_Neurons[i].setZeroPointer();
+            }
+    }
+    
     void Soinn::initialize(const std::pair<wv::Point*, wv::Point*>& points)
     {
         if (m_NumDimensions != points.first->getNumDimensions())
@@ -124,16 +134,18 @@ namespace nn
             wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
             m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
         }
+        else
+        {
+            //increase local error of winner
+            m_Neurons[m_NumWinner].setCurPointDist(p); //recalculate distance between winner and point because it might distort via threshold estimation
+            m_Neurons[m_NumWinner].updateError();  
         
-        //increase local error of winner
-        m_Neurons[m_NumWinner].setCurPointDist(p); //recalculate distance between winner and point because it might distort via threshold estimation
-        m_Neurons[m_NumWinner].updateError();  
-        
-        updateEdgeWinSecWin();
-        incrementEdgeAgeFromWinner();
-        m_Neurons[m_NumWinner].incrementLocalSignals();
-        updateWeights(p);
-        deleteOldEdges();
+            updateEdgeWinSecWin();
+            incrementEdgeAgeFromWinner();
+            m_Neurons[m_NumWinner].incrementLocalSignals();
+            updateWeights(p);
+            deleteOldEdges();
+        }
     }
 
     void Soinn::updateEdgeWinSecWin()
@@ -167,10 +179,28 @@ namespace nn
             m_Neurons[num].getWv()->updateWeightVector(p, &alr_neigh, 1);
         }
     }
+    
+    void Soinn::InsertConcreteNeuron(const wv::Point* p)
+    {
+        uint32_t size = p->getNumDimensions();
+        cont::StaticArray<double> coords(size);
+        for (uint32_t i = 0; i < size; i++)
+            coords[i] = p->getConcreteCoord(i);
 
+        wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
+        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));
+    }
+
+    void Soinn::InsertConcreteEdge(uint32_t neur1, uint32_t neur2)
+    {
+        m_Neurons[neur1].updateEdge(neur2);
+        m_Neurons[neur2].updateEdge(neur1);    
+    }
+    
     void Soinn::deleteOldEdges()
     {
         for (auto& s: m_Neurons)
             s.deleteOldEdges(m_AgeMax);
     }
+
 } //nn
