@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(test_NeuronInsertion)
     sn.incrementLocalSignals();
     sn.incrementLocalSignals();
     sn.setError(1.2);
-    sn.CalcErrorRadius();
+    sn.calcErrorRadius();
     
     coords[0] = 3;
     coords[1] = -2;
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(test_NeuronInsertion)
     neuron::SoinnNeuron sn2(&weightVector2);
     sn2.incrementLocalSignals();
     sn2.setError(0.8);
-    sn2.CalcErrorRadius();
+    sn2.calcErrorRadius();
 
     neuron::SoinnNeuron sn3(&sn, &sn2, 0.5, 0.25, 0.1);
 

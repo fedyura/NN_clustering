@@ -48,7 +48,7 @@ namespace neuron
             return m_LocalSignals;
         }
 
-        double CalcErrorRadius()
+        double calcErrorRadius()
         {
             assert(m_LocalSignals != 0);
             m_ErrorRadius = error() / m_LocalSignals;
@@ -60,12 +60,12 @@ namespace neuron
             return m_ErrorRadius;
         }
 
-        void ChangeLocalSignals(double koeff)
+        void changeLocalSignals(double koeff)
         {
             m_LocalSignals = koeff * m_LocalSignals;
         }
         
-        bool IsInsertionSuccesfull() const
+        bool isInsertionSuccesfull() const
         {
             return (error() / localSignals() <= m_ErrorRadius);
         }

@@ -16,6 +16,7 @@ namespace
     const double TestBetta  = 0.6;
     const double TestGamma  = 0.8;
     const double TestAgeMax = 1;
+    const double TestC      = 0.5;
     const uint32_t TestLambda = 2;
 }
 
@@ -23,7 +24,7 @@ class TestSoinn: public Soinn
 {
   public:
     TestSoinn(NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
-      : Soinn(TestNumDimensions, TestAlpha1, TestAlpha2, TestAlpha3, TestBetta, TestGamma, TestAgeMax, TestLambda, nnit, nt)
+      : Soinn(TestNumDimensions, TestAlpha1, TestAlpha2, TestAlpha3, TestBetta, TestGamma, TestAgeMax, TestLambda, TestC, nnit, nt)
     { }
     
     void initializeNetwork()

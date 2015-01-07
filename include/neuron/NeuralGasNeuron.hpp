@@ -79,6 +79,11 @@ namespace neuron
             m_Neighbours.erase(it);
         }
 
+        void deleteConcreteNeighbour(uint32_t number)
+        {
+            m_Neighbours.erase(number);
+        }
+        
         double error() const
         {
             return m_Error;

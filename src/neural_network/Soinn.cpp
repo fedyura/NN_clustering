@@ -9,7 +9,7 @@ namespace nn
 {
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("Soinn");
     
-    Soinn::Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, NetworkStopCriterion nnit, neuron::NeuronType nt)
+    Soinn::Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C,  NetworkStopCriterion nnit, neuron::NeuronType nt)
     : m_NumDimensions(num_dimensions)
     , m_Alpha1(alpha1)
     , m_Alpha2(alpha2)
@@ -18,10 +18,12 @@ namespace nn
     , m_Gamma(gamma)
     , m_AgeMax(age_max)
     , m_Lambda(lambda)
+    , m_C(C)
     , m_NetStop(nnit)
     , m_NeuronType(nt)
     , m_NumWinner(0)
     , m_NumSecondWinner(0)
+    , m_NumEmptyNeurons(0)
     {
         if (m_NumDimensions < 1)
             throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
@@ -30,10 +32,10 @@ namespace nn
     Soinn::~Soinn()
     {
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
-            if (m_Neurons[i].getWv() != NULL)
+            if (!m_Neurons[i].is_deleted())
             {
                 delete m_Neurons[i].getWv();
-                m_Neurons[i].setZeroPointer();
+                m_Neurons[i].setDeleted();
             }
     }
     
@@ -203,4 +205,129 @@ namespace nn
             s.deleteOldEdges(m_AgeMax);
     }
 
+    void Soinn::insertNode()
+    {
+        //find neuron with max local error
+        double max_error = -1, cur_error = 0;
+        uint32_t num_neuron_max_err = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            cur_error = m_Neurons[i].error();
+            if (cur_error > max_error)
+            {
+                max_error = cur_error;
+                num_neuron_max_err = i;
+            }
+        }
+        
+        //find its neighbour with max local error
+        std::vector<uint32_t> neighbours = m_Neurons[num_neuron_max_err].getNeighbours();
+        max_error = -1, cur_error = 0;
+        uint32_t num_sec_neuron_max_err = 0;
+        for (const uint32_t s: neighbours)
+        {
+            if (m_Neurons[s].is_deleted())
+                continue;
+            cur_error = m_Neurons[s].error();
+            if (cur_error > max_error)
+            {
+                max_error = cur_error;
+                num_sec_neuron_max_err = s;
+            }
+        }
+
+        //create new neuron
+        neuron::SoinnNeuron sn(&m_Neurons[num_neuron_max_err], &m_Neurons[num_sec_neuron_max_err], m_Alpha1, m_Alpha2, m_Alpha3);
+
+        //decrease error and number of local signals
+        m_Neurons[num_neuron_max_err].calcErrorRadius();
+        m_Neurons[num_sec_neuron_max_err].calcErrorRadius();
+
+        m_Neurons[num_neuron_max_err].changeError(m_Betta);
+        m_Neurons[num_sec_neuron_max_err].changeError(m_Betta);
+
+        m_Neurons[num_neuron_max_err].changeLocalSignals(m_Gamma);
+        m_Neurons[num_sec_neuron_max_err].changeLocalSignals(m_Gamma);
+
+        //check if insertion is successful
+        if (m_Neurons[num_neuron_max_err].isInsertionSuccesfull() and 
+            m_Neurons[num_sec_neuron_max_err].isInsertionSuccesfull() and
+            sn.isInsertionSuccesfull())
+        {
+            //insertion is successfull. Add new neuron and replace edges
+            m_Neurons.push_back(sn);
+            
+            //replace edges
+            m_Neurons[num_neuron_max_err].replaceNeighbour(num_sec_neuron_max_err, m_Neurons.size() - 1);
+            m_Neurons[num_sec_neuron_max_err].replaceNeighbour(num_neuron_max_err, m_Neurons.size() - 1);
+            
+            //add edges for new neuron
+            m_Neurons[m_Neurons.size() - 1].updateEdge(num_neuron_max_err);
+            m_Neurons[m_Neurons.size() - 1].updateEdge(num_sec_neuron_max_err);
+        }
+        else
+        {
+            //insertion isn't successful. Restore old parameters
+            m_Neurons[num_neuron_max_err].changeError(1.0 / m_Betta);
+            m_Neurons[num_sec_neuron_max_err].changeError(1.0 / m_Betta);
+
+            m_Neurons[num_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
+            m_Neurons[num_sec_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
+
+            delete []sn.getWv();
+        }
+    }
+    
+    double Soinn::calcAvgLocalSignals()
+    {
+        m_NumEmptyNeurons = 0;
+        double sumLocalSignals = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+            {
+                m_NumEmptyNeurons++;
+                continue;
+            }
+            sumLocalSignals += m_Neurons[i].localSignals();
+        }
+        return sumLocalSignals / (double) (m_Neurons.size() - m_NumEmptyNeurons);
+    }
+    
+    void Soinn::deleteNodes()
+    {
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            if (m_Neurons[i].getNumNeighbours() == 0)
+            {
+                delete m_Neurons[i].getWv();   
+                m_Neurons[i].setDeleted();
+            }
+            else if (m_Neurons[i].getNumNeighbours() == 1)
+            {
+                if (m_Neurons[i].localSignals() < m_C * calcAvgLocalSignals())
+                    deleteNeuron(i);
+            }
+        }    
+    }
+
+    void Soinn::deleteNeuron(uint32_t number)
+    { 
+        //delete neuron with number
+        delete m_Neurons[number].getWv();   
+        m_Neurons[number].setDeleted();
+        
+        //delete all connections between other neurons and deleted neuron
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            m_Neurons[i].deleteConcreteNeighbour(number);    
+        }    
+    }
 } //nn

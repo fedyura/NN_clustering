@@ -11,7 +11,7 @@ namespace nn
     class Soinn
     {
       public:
-        Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);    
+        Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);    
 
         //functions for testing
         double getNeuronError(uint32_t i) const
@@ -57,12 +57,18 @@ namespace nn
         void incrementEdgeAgeFromWinner();
         void updateWeights(const wv::Point* p);
         void deleteOldEdges();
+
+        void insertNode();
+        void deleteNodes();
         
         //for tests
         void InsertConcreteNeuron(const wv::Point* p); 
         void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
       
       private:
+        double calcAvgLocalSignals();
+        void deleteNeuron(uint32_t number);
+        
         uint32_t m_NumDimensions;
         
         double m_Alpha1;
@@ -73,6 +79,8 @@ namespace nn
         
         double m_AgeMax;
         uint32_t m_Lambda;
+
+        double m_C;
         
         NetworkStopCriterion m_NetStop;        //Type of network stop criterion
         neuron::NeuronType m_NeuronType;       //Type of the neuron
