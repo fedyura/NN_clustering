@@ -16,15 +16,15 @@ namespace
     const double TestBetta  = 0.6;
     const double TestGamma  = 0.8;
     const double TestAgeMax = 1;
-    const double TestC      = 0.5;
+    const double TestC      = 0.8;
     const uint32_t TestLambda = 2;
 }
 
 class TestSoinn: public Soinn
 {
   public:
-    TestSoinn(NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
-      : Soinn(TestNumDimensions, TestAlpha1, TestAlpha2, TestAlpha3, TestBetta, TestGamma, TestAgeMax, TestLambda, TestC, nnit, nt)
+    TestSoinn(double alpha1 = TestAlpha1, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
+      : Soinn(TestNumDimensions, alpha1, TestAlpha2, TestAlpha3, TestBetta, TestGamma, TestAgeMax, TestLambda, TestC, nnit, nt)
     { }
     
     void initializeNetwork()
@@ -81,6 +81,32 @@ class TestSoinn: public Soinn
     {
         processNewPoint(p);
     }
+
+    void testInsertNode()
+    {
+        insertNode();
+    }
+
+    void testInsertConcreteEdge(int neur1, int neur2)
+    {
+        InsertConcreteEdge(neur1, neur2);
+    }
+
+    double testCalcAvgLocalSignals()
+    {
+        return calcAvgLocalSignals();
+    }
+
+    void testDeleteNeuron(uint32_t number)
+    {
+        deleteNeuron(number);
+    }
+
+    void testDeleteNodes()
+    {
+        deleteNodes();
+    }
+
 };
     
 BOOST_AUTO_TEST_SUITE(TestSoinnFunctions)
@@ -245,9 +271,6 @@ BOOST_AUTO_TEST_CASE(test_ProcessNewPoint)
     wv::WeightVectorContEuclidean wv3(coords);
     ts.testProcessNewPoint(&wv3);
     
-    //std::cout << ts.testEvalThreshold(1) << std::endl;
-    //std::cout << ts.testEvalThreshold(4) << std::endl;
-    
     BOOST_CHECK_EQUAL(ts.getWinner(), 4);
     BOOST_CHECK_EQUAL(ts.getSecWinner(), 5);
     
@@ -277,5 +300,134 @@ BOOST_AUTO_TEST_CASE(test_ProcessNewPoint)
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 1) * 100 + 0.5), 700);
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 2) * 100 + 0.5), 700);    
 }
+
+BOOST_AUTO_TEST_CASE(test_InsertNode)
+{
+    //Insertion is successfull
+    TestSoinn ts;
+    ts.initializeNetwork();
+    ts.testInsertConcreteEdge(0, 3);
+    
+    ts.setError(0, 4);
+    ts.setError(1, 2);
+    ts.setError(2, 3);
+    ts.setError(3, 5);
+
+    ts.incrementLocalSignals(2);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+
+    ts.testInsertNode();
+        
+    BOOST_CHECK_EQUAL(ts.getNeuronCoord(4, 0), 4);
+    BOOST_CHECK_EQUAL(ts.getNeuronCoord(4, 1), 5);
+    BOOST_CHECK_EQUAL(ts.getNeuronCoord(4, 2), 6);
+
+    BOOST_CHECK_EQUAL(ts.getNeuron(0).error(), 2.4);
+    BOOST_CHECK_EQUAL(ts.getNeuron(3).error(), 3);
+    BOOST_CHECK_EQUAL(ts.getNeuron(4).error(), 1.8);
+
+    BOOST_CHECK_EQUAL(ts.getNeuron(0).localSignals(), 0.8);
+    BOOST_CHECK_EQUAL(ts.getNeuron(3).localSignals(), 3.2);
+    BOOST_CHECK_EQUAL(ts.getNeuron(4).localSignals(), 2.5);
+
+    BOOST_CHECK_EQUAL(ts.getNeuron(0).errorRadius(), 4);
+    BOOST_CHECK_EQUAL((int)(ts.getNeuron(3).errorRadius()*100 + 0.5), 125);
+    BOOST_CHECK_EQUAL((int)(ts.getNeuron(4).errorRadius()*1000 + 0.5), 3675);
+
+    //Insertion isn't successfull
+    TestSoinn ts1(0.8);
+    ts1.initializeNetwork();
+    ts1.testInsertConcreteEdge(0, 3);
+    
+    ts1.setError(0, 4);
+    ts1.setError(1, 2);
+    ts1.setError(2, 3);
+    ts1.setError(3, 5);
+    
+    ts1.incrementLocalSignals(0);
+    ts1.incrementLocalSignals(0);
+    ts1.incrementLocalSignals(0);
+    ts1.incrementLocalSignals(2);
+    ts1.incrementLocalSignals(3);
+    ts1.incrementLocalSignals(3);
+    ts1.incrementLocalSignals(3);
+
+    ts1.testInsertNode();
+        
+    BOOST_CHECK_EQUAL(ts1.getNeuron(0).error(), 4);
+    BOOST_CHECK_EQUAL(ts1.getNeuron(3).error(), 5);
+
+    BOOST_CHECK_EQUAL(ts1.getNeuron(0).localSignals(), 4);
+    BOOST_CHECK_EQUAL(ts1.getNeuron(3).localSignals(), 4);
+
+    BOOST_CHECK_EQUAL(ts1.getNeuron(0).errorRadius(), 1);
+    BOOST_CHECK_EQUAL((int)(ts1.getNeuron(3).errorRadius()*100 + 0.5), 125);
+}
+
+BOOST_AUTO_TEST_CASE(test_deleteNeurons)
+{
+    TestSoinn ts;
+    ts.initializeNetwork();
+    ts.testInsertConcreteEdge(0, 3);
+    
+    ts.incrementLocalSignals(2);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+    
+    std::vector<uint32_t> neighbours = ts.getNeuron(0).getNeighbours();
+    BOOST_REQUIRE_EQUAL(neighbours.size(), 2);
+    std::sort(neighbours.begin(), neighbours.end());
+    BOOST_CHECK_EQUAL(neighbours.at(0), 1);
+    BOOST_CHECK_EQUAL(neighbours.at(1), 3);
+    
+    BOOST_CHECK_EQUAL(ts.testCalcAvgLocalSignals(), 2);
+    BOOST_CHECK_EQUAL(ts.numEmptyNeurons(), 0);
+    
+    ts.testDeleteNeuron(1);
+    ts.testDeleteNeuron(2);
+
+    neighbours = ts.getNeuron(0).getNeighbours();
+    BOOST_REQUIRE_EQUAL(neighbours.size(), 1);
+    std::sort(neighbours.begin(), neighbours.end());
+    BOOST_CHECK_EQUAL(neighbours.at(0), 3);
+    
+    BOOST_CHECK_EQUAL(ts.testCalcAvgLocalSignals(), 2.5);
+    BOOST_CHECK_EQUAL(ts.numEmptyNeurons(), 2);
+}
+
+BOOST_AUTO_TEST_CASE(test_deleteNodes)
+{
+    TestSoinn ts;
+    ts.initializeNetwork();
+
+    ts.incrementLocalSignals(2);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+    ts.incrementLocalSignals(3);
+    
+    ts.testDeleteNodes();
+    
+    BOOST_CHECK_EQUAL(ts.getNeuron(0).is_deleted(), true);
+    BOOST_CHECK_EQUAL(ts.getNeuron(1).is_deleted(), false);
+    BOOST_CHECK_EQUAL(ts.getNeuron(2).is_deleted(), true);
+    BOOST_CHECK_EQUAL(ts.getNeuron(3).is_deleted(), false);
+    
+    std::vector<uint32_t> neighbours = ts.getNeuron(1).getNeighbours();
+    BOOST_REQUIRE_EQUAL(neighbours.size(), 1);
+    std::sort(neighbours.begin(), neighbours.end());
+    BOOST_CHECK_EQUAL(neighbours.at(0), 3);
+
+    neighbours = ts.getNeuron(3).getNeighbours();
+    BOOST_REQUIRE_EQUAL(neighbours.size(), 1);
+    std::sort(neighbours.begin(), neighbours.end());
+    BOOST_CHECK_EQUAL(neighbours.at(0), 1);
+
+    BOOST_CHECK_EQUAL(ts.testCalcAvgLocalSignals(), 2.5);
+    BOOST_CHECK_EQUAL(ts.numEmptyNeurons(), 2);
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
