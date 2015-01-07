@@ -43,6 +43,16 @@ namespace nn
         {
             m_Neurons.at(num).incrementLocalSignals();
         }
+
+        void setError(int num, double error)
+        {
+            m_Neurons.at(num).setError(error);
+        }
+
+        uint32_t numEmptyNeurons()
+        {
+            return m_NumEmptyNeurons;
+        }
         
         ~Soinn();
         
@@ -61,14 +71,14 @@ namespace nn
         void insertNode();
         void deleteNodes();
         
+        double calcAvgLocalSignals();
+        void deleteNeuron(uint32_t number);
+        
         //for tests
         void InsertConcreteNeuron(const wv::Point* p); 
         void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
       
       private:
-        double calcAvgLocalSignals();
-        void deleteNeuron(uint32_t number);
-        
         uint32_t m_NumDimensions;
         
         double m_Alpha1;

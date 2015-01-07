@@ -237,14 +237,15 @@ namespace nn
                 num_sec_neuron_max_err = s;
             }
         }
+        
+        //set error radius of neurons
+        m_Neurons[num_neuron_max_err].calcErrorRadius();
+        m_Neurons[num_sec_neuron_max_err].calcErrorRadius();
 
         //create new neuron
         neuron::SoinnNeuron sn(&m_Neurons[num_neuron_max_err], &m_Neurons[num_sec_neuron_max_err], m_Alpha1, m_Alpha2, m_Alpha3);
 
         //decrease error and number of local signals
-        m_Neurons[num_neuron_max_err].calcErrorRadius();
-        m_Neurons[num_sec_neuron_max_err].calcErrorRadius();
-
         m_Neurons[num_neuron_max_err].changeError(m_Betta);
         m_Neurons[num_sec_neuron_max_err].changeError(m_Betta);
 
@@ -276,7 +277,7 @@ namespace nn
             m_Neurons[num_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
             m_Neurons[num_sec_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
 
-            delete []sn.getWv();
+            delete sn.getWv();
         }
     }
     
@@ -298,6 +299,8 @@ namespace nn
     
     void Soinn::deleteNodes()
     {
+        //list of neurons which we will delete
+        std::vector<uint32_t> deleted_neurons;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
             if (m_Neurons[i].is_deleted())
@@ -311,9 +314,12 @@ namespace nn
             else if (m_Neurons[i].getNumNeighbours() == 1)
             {
                 if (m_Neurons[i].localSignals() < m_C * calcAvgLocalSignals())
-                    deleteNeuron(i);
+                    deleted_neurons.push_back(i);
             }
-        }    
+        }
+        //delete neurons from list
+        for (uint32_t num: deleted_neurons)
+            deleteNeuron(num);    
     }
 
     void Soinn::deleteNeuron(uint32_t number)
