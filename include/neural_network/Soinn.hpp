@@ -86,6 +86,7 @@ namespace nn
       private:
         //return true if we need to continue training, false - otherwise
         bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        void SealNeuronVector();
         
         uint32_t m_NumDimensions;
         

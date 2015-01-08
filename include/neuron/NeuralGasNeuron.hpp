@@ -69,13 +69,16 @@ namespace neuron
             return neighbours;
         }
 
-        void replaceNeighbour(uint32_t number_old, uint32_t number_new)
+        void replaceNeighbour(uint32_t number_old, uint32_t number_new, bool save_old_edge_age = false)
         {
             std::unordered_map<uint32_t, uint32_t>::iterator it = m_Neighbours.find(number_old);
             if (it == m_Neighbours.end()) 
                 throw std::runtime_error("Error in replaceNeighbour function. Old edge doesn't exist");
             
-            m_Neighbours.emplace(number_new, 0);  //it->second (if set old value)
+            if (!save_old_edge_age)
+                m_Neighbours.emplace(number_new, 0);  //it->second (if set old value)
+            else
+                m_Neighbours.emplace(number_new, it->second);  //it->second (if set old value)
             m_Neighbours.erase(it);
         }
 
@@ -103,7 +106,7 @@ namespace neuron
         {
             return m_Neighbours.size();
         }
-            
+
     private:
         double m_Error; //error of neuron
         std::unordered_map<uint32_t, uint32_t> m_Neighbours; //Neigbour number => edge age

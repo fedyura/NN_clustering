@@ -108,7 +108,6 @@ namespace nn
         else
         {
             double min_dist = std::numeric_limits<double>::max(), cur_dist = 0;
-            //здесь тоже надо учесть, чтобы нейрон был не удален
             for (uint32_t i = 0; i < m_Neurons.size(); i++)
             {
                 neuron::SoinnNeuron cur_neuron = m_Neurons.at(i);
@@ -136,7 +135,7 @@ namespace nn
             cont::StaticArray<double> coords(m_NumDimensions);
             for (uint32_t i = 0; i < m_NumDimensions; i++)
                 coords[i] = p->getConcreteCoord(i);
-        
+            
             wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
             m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
         }
@@ -365,17 +364,9 @@ namespace nn
             iteration++;
         }
         //print all neurons
-        /*
-        for (uint32_t i = 0; i < m_Neurons.size(); i++)
-        {
-            log_netw->debug((boost::format("Neuron number %d") % i).str());
-            for (uint32_t j = 0; j < m_NumDimensions; j++)
-            {
-                log_netw->debug((boost::format("%g ") % m_Neurons[i].getWv()->getConcreteCoord(j)).str());
-            }
-        }
-        */
         deleteNodes(true);
+        SealNeuronVector();
+        
         double error_after = getErrorOnNeuron();
         
         log_netw->info((boost::format("Error before %g. Error after %g") % error_before % error_after).str());
@@ -470,5 +461,43 @@ namespace nn
         }
         //log_netw->debug((boost::format("winner = %d cluster = %d") % winner % neuron_cluster.at(winner)).str());
         return neuron_cluster.at(winner);
+    }
+
+    void Soinn::SealNeuronVector()
+    {
+        std::vector<neuron::SoinnNeuron> newNeurons;
+        uint32_t count_notnull = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            if (i == count_notnull)
+            {
+                count_notnull++;
+                continue;
+            }
+            //newNeurons.push_back(m_Neurons[i]);
+            for (uint32_t j = 0; j < m_Neurons.size(); j++)
+            {
+                if (m_Neurons[j].is_deleted())
+                    continue;
+                try
+                {
+                    m_Neurons[j].replaceNeighbour(i, count_notnull, true);    
+                }
+                catch (std::runtime_error)
+                {
+                }
+            }
+            count_notnull++;    
+        }
+        
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            newNeurons.push_back(m_Neurons[i]);
+        }
+        m_Neurons = newNeurons;        
     }
 } //nn
