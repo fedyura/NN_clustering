@@ -16,6 +16,7 @@ namespace nn
         void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
         void exportEdgesFile(const std::string& filename) const;
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
+        void findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const;
         
         //functions for testing
         double getNeuronError(uint32_t i) const
@@ -78,6 +79,10 @@ namespace nn
         double calcAvgLocalSignals();
         void deleteNeuron(uint32_t number);
         double getErrorOnNeuron();
+
+        double calcInnerClusterDistance() const;
+        void calcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const;
+        double calcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const;
         
         //for tests
         void InsertConcreteNeuron(const wv::Point* p); 
@@ -87,6 +92,8 @@ namespace nn
         //return true if we need to continue training, false - otherwise
         bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
         void SealNeuronVector();
+        void dfs(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const;
+        double calcDistanceBetweenTwoClusters(std::vector<uint32_t> cluster1, std::vector<uint32_t> cluster2) const;
         
         uint32_t m_NumDimensions;
         

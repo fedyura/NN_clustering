@@ -500,4 +500,95 @@ namespace nn
         }
         m_Neurons = newNeurons;        
     }
+
+    double Soinn::calcInnerClusterDistance() const
+    {
+        double overall_dist = 0;
+        uint32_t num_edges = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            for (uint32_t num: m_Neurons[i].getNeighbours())
+            {
+                overall_dist += m_Neurons[i].getWv()->calcDistance(m_Neurons[num].getWv());
+                num_edges++;
+            }
+        }
+        return overall_dist / (double) num_edges;
+    }
+
+    //Depth-first search
+    void Soinn::dfs(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const
+    {
+        marked[vert_number] = true;
+        concr_comp.push_back(vert_number);
+        for (uint32_t num: m_Neurons[vert_number].getNeighbours())
+        {
+            if (!marked[num])
+            {
+                dfs(marked, num, concr_comp);
+            }
+        }
+    }
+    
+    void Soinn::findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const //comp_number => vertex in component
+    {
+        uint32_t graph_vertex_num = m_Neurons.size();
+        cont::StaticArray<bool> marked(graph_vertex_num);
+
+        for (uint32_t i = 0; i < graph_vertex_num; i++)
+            marked[i] = false;
+
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (!marked[i])
+            {
+                std::vector<uint32_t> concr_comp;
+                dfs(marked, i, concr_comp);
+                conn_comp.push_back(concr_comp);
+            }
+        }
+    }
+
+    //Calculate between cluster distanse and sort it
+    void Soinn::calcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const
+    {
+        for (uint32_t i = 0; i < conn_comp.size(); i++)
+            for (uint32_t j = i + 1; j < conn_comp.size(); j++)
+                dist.push_back(calcDistanceBetweenTwoClusters(conn_comp[i], conn_comp[j]));
+        std::sort(dist.begin(), dist.end());        
+    }
+
+    double Soinn::calcDistanceBetweenTwoClusters(std::vector<uint32_t> cluster1, std::vector<uint32_t> cluster2) const
+    {
+        double min_dist = std::numeric_limits<double>::max();
+        for (uint32_t i = 0; i < cluster1.size(); i++)
+            for (uint32_t j = 0; j < cluster2.size(); j++)
+            {
+                double cur_dist = m_Neurons[cluster1[i]].getWv()->calcDistance(m_Neurons[cluster2[j]].getWv());
+                if (cur_dist < min_dist)
+                    min_dist = cur_dist;
+            }
+        return min_dist;    
+    }
+
+    double Soinn::calcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const
+    {
+        double inner_cluster_dist = calcInnerClusterDistance();
+        double second_layer_threshold = 0;
+
+        std::vector<double> between_cluster_dist;
+        calcBetweenClustersDistanceVector(clusters, between_cluster_dist);
+        
+        for (uint32_t i = 0; i < between_cluster_dist.size(); i++)
+        {
+            if (between_cluster_dist[i] >= inner_cluster_dist)
+            {
+                second_layer_threshold = between_cluster_dist[i];
+                break; 
+            }
+        }
+        if (second_layer_threshold == 0)
+            second_layer_threshold = inner_cluster_dist;
+        return second_layer_threshold;    
+    }
 } //nn
