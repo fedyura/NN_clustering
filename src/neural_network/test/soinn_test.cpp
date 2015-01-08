@@ -107,6 +107,25 @@ class TestSoinn: public Soinn
         deleteNodes();
     }
 
+    double testCalcInnerClusterDistance()
+    {
+        return calcInnerClusterDistance();
+    }
+
+    void testInsertConcreteNeuron(const wv::Point* p)
+    {
+        InsertConcreteNeuron(p);
+    }
+
+    void testCalcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const
+    {
+        calcBetweenClustersDistanceVector(conn_comp, dist);
+    }
+
+    double testCalcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const
+    {
+        return calcThresholdSecondLayer(clusters);
+    }
 };
     
 BOOST_AUTO_TEST_SUITE(TestSoinnFunctions)
@@ -221,6 +240,8 @@ BOOST_AUTO_TEST_CASE(test_ProcessNewPoint)
     BOOST_CHECK_EQUAL(ts.getNeuronCoord(4, 1), 6);
     BOOST_CHECK_EQUAL(ts.getNeuronCoord(4, 2), 7);
 
+    BOOST_CHECK_EQUAL((int)(ts.testCalcInnerClusterDistance()*1000 + 0.5), 5196);
+
     //--------------------------Second point---------------
     coords[0] = 6;
     coords[1] = 7;
@@ -254,7 +275,8 @@ BOOST_AUTO_TEST_CASE(test_ProcessNewPoint)
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(4, 0) * 100 + 0.5), 600);
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(4, 1) * 100 + 0.5), 650);
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(4, 2) * 100 + 0.5), 750);
-    
+
+    BOOST_CHECK_EQUAL((int)(ts.testCalcInnerClusterDistance()*1000+0.5), 4234);
     //----------------------------Third point-------------------
     coords[0] = 3;
     coords[1] = 7;
@@ -298,7 +320,9 @@ BOOST_AUTO_TEST_CASE(test_ProcessNewPoint)
 
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 0) * 100 + 0.5), 302);
     BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 1) * 100 + 0.5), 700);
-    BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 2) * 100 + 0.5), 700);    
+    BOOST_CHECK_EQUAL(int(ts.getNeuronCoord(5, 2) * 100 + 0.5), 700);   
+    
+    BOOST_CHECK_EQUAL((int)(ts.testCalcInnerClusterDistance()*1000+0.5), 4345);
 }
 
 BOOST_AUTO_TEST_CASE(test_InsertNode)
@@ -429,5 +453,97 @@ BOOST_AUTO_TEST_CASE(test_deleteNodes)
     BOOST_CHECK_EQUAL(ts.numEmptyNeurons(), 2);
 }
 
+BOOST_AUTO_TEST_CASE(test_FindConnectedComponents)
+{
+    TestSoinn ts;
+    ts.initializeNetwork();
+
+    cont::StaticArray<double> coords(TestNumDimensions);
+    coords[0] = 10;
+    coords[1] = 11;
+    coords[2] = 12;
+    wv::WeightVectorContEuclidean wv(coords);
+    ts.testInsertConcreteNeuron(&wv);
+
+    coords[0] = 11;
+    coords[1] = 12;
+    coords[2] = 13;
+    wv::WeightVectorContEuclidean wv1(coords);
+    ts.testInsertConcreteNeuron(&wv1);
+    
+    coords[0] = 12;
+    coords[1] = 13;
+    coords[2] = 14;
+    wv::WeightVectorContEuclidean wv2(coords);
+    ts.testInsertConcreteNeuron(&wv2);
+
+    coords[0] = 12.5;
+    coords[1] = 13.5;
+    coords[2] = 14.5;
+    wv::WeightVectorContEuclidean wv3(coords);
+    ts.testInsertConcreteNeuron(&wv3);
+
+    coords[0] = 14;
+    coords[1] = 15;
+    coords[2] = 16;
+    wv::WeightVectorContEuclidean wv4(coords);
+    ts.testInsertConcreteNeuron(&wv4);
+
+    coords[0] = 15;
+    coords[1] = 16;
+    coords[2] = 17;
+    wv::WeightVectorContEuclidean wv5(coords);
+    ts.testInsertConcreteNeuron(&wv5);
+
+    coords[0] = 16;
+    coords[1] = 17;
+    coords[2] = 18;
+    wv::WeightVectorContEuclidean wv6(coords);
+    ts.testInsertConcreteNeuron(&wv6);
+
+    ts.testInsertConcreteEdge(0, 3);
+    ts.testInsertConcreteEdge(0, 2);
+    ts.testInsertConcreteEdge(3, 4);
+    ts.testInsertConcreteEdge(4, 5);
+    ts.testInsertConcreteEdge(5, 6);
+
+    ts.testInsertConcreteEdge(7, 8);
+    ts.testInsertConcreteEdge(8, 9);
+    ts.testInsertConcreteEdge(7, 9);
+
+    std::vector<std::vector<uint32_t>> conn_comp;
+    ts.findConnectedComponents(conn_comp);
+
+    BOOST_REQUIRE_EQUAL(conn_comp.size(), 3);
+    BOOST_REQUIRE_EQUAL(conn_comp[0].size(), 7);
+    std::sort(conn_comp[0].begin(), conn_comp[0].end());
+    BOOST_CHECK_EQUAL(conn_comp[0][0], 0);
+    BOOST_CHECK_EQUAL(conn_comp[0][1], 1);
+    BOOST_CHECK_EQUAL(conn_comp[0][2], 2);
+    BOOST_CHECK_EQUAL(conn_comp[0][3], 3);
+    BOOST_CHECK_EQUAL(conn_comp[0][4], 4);
+    BOOST_CHECK_EQUAL(conn_comp[0][5], 5);
+    BOOST_CHECK_EQUAL(conn_comp[0][6], 6);
+
+    BOOST_REQUIRE_EQUAL(conn_comp[1].size(), 3);
+    std::sort(conn_comp[1].begin(), conn_comp[1].end());
+    BOOST_CHECK_EQUAL(conn_comp[1][0], 7);
+    BOOST_CHECK_EQUAL(conn_comp[1][1], 8);
+    BOOST_CHECK_EQUAL(conn_comp[1][2], 9);
+    
+    BOOST_REQUIRE_EQUAL(conn_comp[2].size(), 1);
+    BOOST_CHECK_EQUAL(conn_comp[2][0], 10);
+
+    std::vector<double> dist;
+
+    ts.testCalcBetweenClustersDistanceVector(conn_comp, dist);
+    BOOST_REQUIRE_EQUAL(dist.size(), 3);
+    BOOST_CHECK_EQUAL((int)(dist[0] * 1000 + 0.5), 866); 
+    BOOST_CHECK_EQUAL((int)(dist[1] * 1000 + 0.5), 1732); 
+    BOOST_CHECK_EQUAL((int)(dist[2] * 1000 + 0.5), 6928); 
+
+    BOOST_CHECK_EQUAL((int)(ts.testCalcInnerClusterDistance() * 1000 + 0.5), 4246);  
+    BOOST_CHECK_EQUAL((int)(ts.testCalcThresholdSecondLayer(conn_comp) * 1000 + 0.5), 6928);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
