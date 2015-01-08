@@ -9,7 +9,7 @@ namespace nn
 {
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("Soinn");
     
-    Soinn::Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C,  NetworkStopCriterion nnit, neuron::NeuronType nt)
+    Soinn::Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C, NetworkStopCriterion nnit, neuron::NeuronType nt)
     : m_NumDimensions(num_dimensions)
     , m_Alpha1(alpha1)
     , m_Alpha2(alpha2)
@@ -27,6 +27,7 @@ namespace nn
     {
         if (m_NumDimensions < 1)
             throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
+        log_netw->debug("Network is successfully created");    
     }
 
     Soinn::~Soinn()
@@ -58,6 +59,7 @@ namespace nn
         m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
         m_Neurons[0].updateEdge(1);
         m_Neurons[1].updateEdge(0);
+        log_netw->debug("Network is successfully initialized");
     }
 
     std::pair<double, double> Soinn::findWinners(const wv::Point* p)
@@ -66,6 +68,8 @@ namespace nn
         double cur_dist = 0;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
+            if (m_Neurons[i].is_deleted())
+                continue;
             cur_dist = m_Neurons[i].setCurPointDist(p);
             if (cur_dist < min_dist_main)
             {
@@ -297,7 +301,7 @@ namespace nn
         return sumLocalSignals / (double) (m_Neurons.size() - m_NumEmptyNeurons);
     }
     
-    void Soinn::deleteNodes()
+    void Soinn::deleteNodes(bool only_no_neighbours)
     {
         //list of neurons which we will delete
         std::vector<uint32_t> deleted_neurons;
@@ -311,7 +315,7 @@ namespace nn
                 delete m_Neurons[i].getWv();   
                 m_Neurons[i].setDeleted();
             }
-            else if (m_Neurons[i].getNumNeighbours() == 1)
+            else if (m_Neurons[i].getNumNeighbours() == 1 and !only_no_neighbours)
             {
                 if (m_Neurons[i].localSignals() < m_C * calcAvgLocalSignals())
                     deleted_neurons.push_back(i);
@@ -353,31 +357,52 @@ namespace nn
             processNewPoint(points[order[i]].get());
             if (iteration % m_Lambda == 0)
             {
+                log_netw->debug("iteration multiple lambda");
                 insertNode(); 
                 deleteNodes();
             }
             
             iteration++;
         }
+        //print all neurons
+        /*
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            log_netw->debug((boost::format("Neuron number %d") % i).str());
+            for (uint32_t j = 0; j < m_NumDimensions; j++)
+            {
+                log_netw->debug((boost::format("%g ") % m_Neurons[i].getWv()->getConcreteCoord(j)).str());
+            }
+        }
+        */
+        deleteNodes(true);
         double error_after = getErrorOnNeuron();
         
         log_netw->info((boost::format("Error before %g. Error after %g") % error_before % error_after).str());
-        log_netw->info((boost::format("Network size: %d neurons") % m_Neurons.size()).str()); 
-        return (error_before - getErrorOnNeuron() > epsilon);
+        log_netw->info((boost::format("Network size = %d, number of empty neurons = %d") % m_Neurons.size() % m_NumEmptyNeurons).str());
+        return (std::abs(error_before - error_after) > epsilon);
     }
 
     double Soinn::getErrorOnNeuron()
     {
         double error = 0;
+        uint32_t num_non_empty_neurons = 0;
         for (const auto& s: m_Neurons)
         {
             if (!s.is_deleted())
+            {
                 error += s.error();
+                num_non_empty_neurons++;
+            }
         }
         //set max error for initial network of two neurons
         if (m_Neurons.size() == 2)
+        {
             error = std::numeric_limits<double>::max();
-        return error/m_Neurons.size();
+            num_non_empty_neurons = 2;
+        }
+        m_NumEmptyNeurons = m_Neurons.size() - num_non_empty_neurons;
+        return error/num_non_empty_neurons;
     }
 
     void Soinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
@@ -388,8 +413,62 @@ namespace nn
         {
             log_netw->info("----------------------------------------------------------------------");
             log_netw->info((boost::format("Iteration %d") % iteration).str());
-            log_netw->info((boost::format("Network size = %d, number of empty neurons = %d") % m_Neurons.size() % m_NumEmptyNeurons).str());
             iteration++;
+            if (iteration > 50)
+                break;
         }
+    }
+
+    void Soinn::exportEdgesFile(const std::string& filename) const
+    {
+        std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second - the older one)
+        uint32_t edge_weight = 1;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            std::vector<uint32_t> neighbour = m_Neurons[i].getNeighbours();
+            uint64_t key = 0;
+            for (uint32_t neigh: neighbour)
+            {
+                key = (i < neigh) ? neigh : i;
+                key = key << 32;
+                key += (i < neigh) ? i : neigh;
+                edges.emplace(key, edge_weight);
+            }
+        }
+
+        //print edges in file
+        std::ofstream out(filename, std::ios::out);
+        for (const auto s: edges)
+        {
+            uint64_t key = s.first; 
+            out << (key & 0x00000000FFFFFFFF) << " ";
+            key = key >> 32;
+            out << (key & 0x00000000FFFFFFFF) << " " << edge_weight << std::endl;
+        }
+
+        out.close();
+    }
+
+    //find cluster for each point for built network
+    uint32_t Soinn::findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const
+    {
+        double min_dist_main = std::numeric_limits<double>::max();
+        double cur_dist = 0;
+        uint32_t winner = 0;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            cur_dist = m_Neurons[i].getWv()->calcDistance(p);       
+            if (cur_dist < min_dist_main)
+            {
+                min_dist_main = cur_dist;
+                winner = i;
+            }
+        }
+        //log_netw->debug((boost::format("winner = %d cluster = %d") % winner % neuron_cluster.at(winner)).str());
+        return neuron_cluster.at(winner);
     }
 } //nn
