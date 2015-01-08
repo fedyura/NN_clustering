@@ -13,6 +13,8 @@ namespace nn
       public:
         Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);    
 
+        void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        
         //functions for testing
         double getNeuronError(uint32_t i) const
         {
@@ -73,12 +75,16 @@ namespace nn
         
         double calcAvgLocalSignals();
         void deleteNeuron(uint32_t number);
+        double getErrorOnNeuron();
         
         //for tests
         void InsertConcreteNeuron(const wv::Point* p); 
         void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
       
       private:
+        //return true if we need to continue training, false - otherwise
+        bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        
         uint32_t m_NumDimensions;
         
         double m_Alpha1;

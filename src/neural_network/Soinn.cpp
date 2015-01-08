@@ -336,4 +336,60 @@ namespace nn
             m_Neurons[i].deleteConcreteNeighbour(number);    
         }    
     }
+
+    bool Soinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    {
+        //create vector with order of iterating by points
+        std::vector<uint32_t> order;
+        for (uint32_t i = 0; i < points.size(); i++)
+            order.push_back(i);
+        
+        std::random_shuffle(order.begin(), order.end());
+        uint32_t iteration = 1;
+        double error_before = getErrorOnNeuron();
+
+        for (uint32_t i = 0; i < order.size(); i++)
+        {
+            processNewPoint(points[order[i]].get());
+            if (iteration % m_Lambda == 0)
+            {
+                insertNode(); 
+                deleteNodes();
+            }
+            
+            iteration++;
+        }
+        double error_after = getErrorOnNeuron();
+        
+        log_netw->info((boost::format("Error before %g. Error after %g") % error_before % error_after).str());
+        log_netw->info((boost::format("Network size: %d neurons") % m_Neurons.size()).str()); 
+        return (error_before - getErrorOnNeuron() > epsilon);
+    }
+
+    double Soinn::getErrorOnNeuron()
+    {
+        double error = 0;
+        for (const auto& s: m_Neurons)
+        {
+            if (!s.is_deleted())
+                error += s.error();
+        }
+        //set max error for initial network of two neurons
+        if (m_Neurons.size() == 2)
+            error = std::numeric_limits<double>::max();
+        return error/m_Neurons.size();
+    }
+
+    void Soinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    {
+        initialize(std::make_pair(points[points.size()/3].get(), points[points.size()*2/3].get()));
+        uint32_t iteration = 1;
+        while (trainOneEpoch(points, epsilon))
+        {
+            log_netw->info("----------------------------------------------------------------------");
+            log_netw->info((boost::format("Iteration %d") % iteration).str());
+            log_netw->info((boost::format("Network size = %d, number of empty neurons = %d") % m_Neurons.size() % m_NumEmptyNeurons).str());
+            iteration++;
+        }
+    }
 } //nn
