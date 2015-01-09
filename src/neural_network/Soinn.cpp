@@ -1,6 +1,8 @@
 #include <adapt_learn_rate/AdaptLearnRateSoinn.hpp>
 #include <algorithm>
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
+#include <cstdio>
 #include <fstream>
 #include <logger/logger.hpp>
 #include <neural_network/Soinn.hpp>
@@ -57,8 +59,6 @@ namespace nn
         wv::WeightVectorContEuclidean* sWeightVector2 = new wv::WeightVectorContEuclidean(coords2);
         m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector1));
         m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
-        m_Neurons[0].updateEdge(1);
-        m_Neurons[1].updateEdge(0);
         log_netw->debug("Network is successfully initialized");
     }
 
@@ -123,11 +123,19 @@ namespace nn
         return threshold;
     }
 
-    void Soinn::processNewPoint(const wv::Point* p)
+    void Soinn::processNewPoint(const wv::Point* p, bool train_first_layer, double threshold_sec_layer)
     {
         std::pair<double, double> dist = findWinners(p);
-        m_Neurons[m_NumWinner].setThreshold(EvalThreshold(m_NumWinner));
-        m_Neurons[m_NumSecondWinner].setThreshold(EvalThreshold(m_NumSecondWinner));
+        if (train_first_layer)
+        {
+            m_Neurons[m_NumWinner].setThreshold(EvalThreshold(m_NumWinner));
+            m_Neurons[m_NumSecondWinner].setThreshold(EvalThreshold(m_NumSecondWinner));
+        }
+        else
+        {
+            m_Neurons[m_NumWinner].setThreshold(threshold_sec_layer);
+            m_Neurons[m_NumSecondWinner].setThreshold(threshold_sec_layer);
+        }
         
         if (m_Neurons[m_NumWinner].isCreateNewNode(dist.first) || m_Neurons[m_NumSecondWinner].isCreateNewNode(dist.second))
         {
@@ -340,7 +348,7 @@ namespace nn
         }    
     }
 
-    bool Soinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    bool Soinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon, bool train_first_layer, double threshold_sec_layer)
     {
         //create vector with order of iterating by points
         std::vector<uint32_t> order;
@@ -353,7 +361,7 @@ namespace nn
 
         for (uint32_t i = 0; i < order.size(); i++)
         {
-            processNewPoint(points[order[i]].get());
+            processNewPoint(points[order[i]].get(), train_first_layer, threshold_sec_layer);
             if (iteration % m_Lambda == 0)
             {
                 log_netw->debug("iteration multiple lambda");
@@ -396,18 +404,38 @@ namespace nn
         return error/num_non_empty_neurons;
     }
 
-    void Soinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon)
+    void Soinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
+                             uint32_t num_iteration_first_layer, uint32_t num_iteration_second_layer)
     {
         initialize(std::make_pair(points[points.size()/3].get(), points[points.size()*2/3].get()));
         uint32_t iteration = 1;
-        while (trainOneEpoch(points, epsilon))
+        double epsilon = 0.005;
+        //train first layer
+        log_netw->info("********************Train first layer************************");
+        while (iteration <= num_iteration_first_layer)
         {
+            trainOneEpoch(points, epsilon, true, 0);
             log_netw->info("----------------------------------------------------------------------");
             log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
-            if (iteration > 50)
-                break;
         }
+        std::vector<std::vector<uint32_t>> first_layer_clust;
+        findClustersMCL(first_layer_clust);
+
+        //train second layer
+        log_netw->info("********************Train second layer************************");
+        double threshold_sec_layer = calcThresholdSecondLayer(result);
+        log_netw->info((boost::format("Threshold of second layer %d") % threshold_sec_layer).str());
+        
+        iteration = 1;
+        while (iteration <= num_iteration_second_layer)
+        {
+            trainOneEpoch(points, epsilon, false, threshold_sec_layer);
+            log_netw->info("----------------------------------------------------------------------");
+            log_netw->info((boost::format("Iteration %d") % iteration).str());
+            iteration++;
+        }
+        findClustersMCL(result);
     }
 
     void Soinn::exportEdgesFile(const std::string& filename) const
@@ -590,5 +618,40 @@ namespace nn
         if (second_layer_threshold == 0)
             second_layer_threshold = inner_cluster_dist;
         return second_layer_threshold;    
+    }
+
+    void Soinn::findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const
+    {
+        //prepare input data for mcl
+        exportEdgesFile(output_src_mcl);
+    
+        //run mcl algorithm
+        std::string output_mcl = "mcl_clusters.tmp";    
+        std::string options = " -I 2.0 --abc -o ";
+        std::string command = mcl_path + output_src_mcl + options + output_mcl;
+        system(command.c_str());
+        
+        //read output mcl file and form results
+        std::ifstream fi(output_mcl);
+        if (not fi)
+            throw std::runtime_error("Can't read mcl output file. File " + output_mcl + " is not found");
+        
+        std::string line;
+        while (std::getline(fi, line) and !line.empty())
+        {
+            std::vector<std::string> items;
+            boost::split(items, line, boost::is_any_of("\t"));
+            std::vector<uint32_t> one_cluster;
+            for (const std::string& s: items)
+            {
+                uint32_t neuron_num = std::stoul(s);
+                one_cluster.push_back(neuron_num);
+            }
+            clusters.push_back(one_cluster);
+        }
+
+        //remove temporary files
+        std::remove(output_src_mcl.c_str());
+        std::remove(output_mcl.c_str());
     }
 } //nn

@@ -8,12 +8,16 @@
 
 namespace nn
 {
+    const std::string mcl_path = "/home/yura/local/bin/mcl ";
+    const std::string output_src_mcl = "soinn_output_mcl.tmp";
+    
     class Soinn
     {
       public:
         Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);    
 
-        void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
+                          uint32_t num_iteration_first_layer, uint32_t num_iteration_sec_layer);
         void exportEdgesFile(const std::string& filename) const;
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
         void findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const;
@@ -67,7 +71,7 @@ namespace nn
 
         std::pair<double, double> findWinners(const wv::Point* p);
         double EvalThreshold(uint32_t num_neuron);
-        void processNewPoint(const wv::Point* p);
+        void processNewPoint(const wv::Point* p, bool train_first_layer = true, double threshold_sec_layer = 0);
         void updateEdgeWinSecWin();
         void incrementEdgeAgeFromWinner();
         void updateWeights(const wv::Point* p);
@@ -83,6 +87,8 @@ namespace nn
         double calcInnerClusterDistance() const;
         void calcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const;
         double calcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const;
+
+        void findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const;
         
         //for tests
         void InsertConcreteNeuron(const wv::Point* p); 
@@ -90,7 +96,7 @@ namespace nn
       
       private:
         //return true if we need to continue training, false - otherwise
-        bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon);
+        bool trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon, bool train_first_layer = true, double threshold_sec_layer = 0);
         void SealNeuronVector();
         void dfs(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const;
         double calcDistanceBetweenTwoClusters(std::vector<uint32_t> cluster1, std::vector<uint32_t> cluster2) const;

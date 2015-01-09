@@ -11,6 +11,7 @@ namespace
     
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
 
+    /*
     void readMCLAnswer(const std::string& filename)
     {
         std::ifstream fi(filename);
@@ -30,6 +31,7 @@ namespace
             linesread++;
         }
     }
+    */
 }
 
 int main (int argc, char* argv[])
@@ -53,7 +55,15 @@ int main (int argc, char* argv[])
     //nn::Soinn ns(ex::NumDimensionsIrisDataSet, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 50 /*lambda*/, 0.5); 
     
     nn::Soinn ns(ex::NumDimensionsIrisDataSet, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 50 /*lambda*/, 0.5); 
-    ns.trainNetwork(points, 0.001);   
+        
+    std::vector<std::vector<uint32_t>> conn_comp;
+    ns.trainNetwork(points, conn_comp, 50, 2);   
+    
+    for (uint32_t i = 0; i < conn_comp.size(); i++)
+        for (uint32_t j = 0; j < conn_comp[i].size(); j++)
+            neuron_clusters.emplace(conn_comp[i][j], i);
+        
+    /*
     ns.exportEdgesFile(output_filename);
     
     //run mcl algorithm
@@ -65,7 +75,8 @@ int main (int argc, char* argv[])
     
     //read answer from mcl
     readMCLAnswer(output_mcl);
-    
+    */
+        
     //define clusters
     uint32_t i = 0;
     for (const auto p: points)
