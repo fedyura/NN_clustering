@@ -5,22 +5,18 @@
 #include <cstdio>
 #include <fstream>
 #include <logger/logger.hpp>
-#include <neural_network/Soinn.hpp>
+#include <neural_network/ESoinn.hpp>
 
 namespace nn
 {
-    logger::ConcreteLogger* log_netw = logger::Logger::getLog("Soinn");
+    logger::ConcreteLogger* log_netw = logger::Logger::getLog("ESoinn");
     
-    Soinn::Soinn(uint32_t num_dimensions, double alpha1, double alpha2, double alpha3, double betta, double gamma, double age_max, uint32_t lambda, double C, NetworkStopCriterion nnit, neuron::NeuronType nt)
+    ESoinn::ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit, neuron::NeuronType nt)
     : m_NumDimensions(num_dimensions)
-    , m_Alpha1(alpha1)
-    , m_Alpha2(alpha2)
-    , m_Alpha3(alpha3)
-    , m_Betta(betta)
-    , m_Gamma(gamma)
     , m_AgeMax(age_max)
     , m_Lambda(lambda)
-    , m_C(C)
+    , m_C1(C1)
+    , m_C2(C2)
     , m_NetStop(nnit)
     , m_NeuronType(nt)
     , m_NumWinner(0)
@@ -32,7 +28,7 @@ namespace nn
         log_netw->debug("Network is successfully created");    
     }
 
-    Soinn::~Soinn()
+    ESoinn::~ESoinn()
     {
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
             if (!m_Neurons[i].is_deleted())
@@ -42,7 +38,7 @@ namespace nn
             }
     }
     
-    void Soinn::initialize(const std::pair<wv::Point*, wv::Point*>& points)
+    void ESoinn::initialize(const std::pair<wv::Point*, wv::Point*>& points, const std::pair<uint32_t, uint32_t>& src_label)
     {
         if (m_NumDimensions != points.first->getNumDimensions())
             throw std::runtime_error("Number of dimensions for data doesn't correspond dimension of neural network");
@@ -57,12 +53,12 @@ namespace nn
         
         wv::WeightVectorContEuclidean* sWeightVector1 = new wv::WeightVectorContEuclidean(coords1);
         wv::WeightVectorContEuclidean* sWeightVector2 = new wv::WeightVectorContEuclidean(coords2);
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector1));
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
+        m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector1, src_label.first));
+        m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector2, src_label.second));
         log_netw->debug("Network is successfully initialized");
     }
 
-    std::pair<double, double> Soinn::findWinners(const wv::Point* p)
+    std::pair<double, double> ESoinn::findWinners(const wv::Point* p)
     {
         double min_dist_main = std::numeric_limits<double>::max(), min_dist_sec = std::numeric_limits<double>::max();
         double cur_dist = 0;
@@ -87,7 +83,7 @@ namespace nn
         return std::make_pair(min_dist_main, min_dist_sec);
     }
 
-    double Soinn::EvalThreshold(uint32_t num_neuron)
+    double ESoinn::evalThreshold(uint32_t num_neuron)
     {
         std::vector<uint32_t> neighbours = m_Neurons.at(num_neuron).getNeighbours();
         double threshold = 0;
@@ -110,7 +106,7 @@ namespace nn
             double min_dist = std::numeric_limits<double>::max(), cur_dist = 0;
             for (uint32_t i = 0; i < m_Neurons.size(); i++)
             {
-                neuron::SoinnNeuron cur_neuron = m_Neurons.at(i);
+                neuron::ESoinnNeuron cur_neuron = m_Neurons.at(i);
                 if (!cur_neuron.is_deleted() and i != num_neuron)
                 {
                     cur_dist = m_Neurons[num_neuron].setCurPointDist(cur_neuron.getWv());
@@ -123,21 +119,13 @@ namespace nn
         return threshold;
     }
 
-    void Soinn::processNewPoint(const wv::Point* p, bool train_first_layer, double threshold_sec_layer)
+    void ESoinn::processNewPoint(const wv::Point* p, uint32_t label)
     {
         std::pair<double, double> dist = findWinners(p);
-        if (train_first_layer)
-        {
-            m_Neurons[m_NumWinner].setThreshold(EvalThreshold(m_NumWinner));
-            m_Neurons[m_NumSecondWinner].setThreshold(EvalThreshold(m_NumSecondWinner));
-        }
-        else
-        {
-            m_Neurons[m_NumWinner].setThreshold(threshold_sec_layer);
-            m_Neurons[m_NumSecondWinner].setThreshold(threshold_sec_layer);
-        }
-        
-        if (m_Neurons[m_NumWinner].isCreateNewNode(dist.first) || m_Neurons[m_NumSecondWinner].isCreateNewNode(dist.second))
+        double winner_threshold = evalThreshold(m_NumWinner);
+        double sec_winner_threshold = evalThreshold(m_NumSecondWinner);
+
+        if (dist.first > winner_threshold || dist.second > sec_winner_threshold)
         {
             //insert new neuron
             cont::StaticArray<double> coords(m_NumDimensions);
@@ -145,29 +133,21 @@ namespace nn
                 coords[i] = p->getConcreteCoord(i);
             
             wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
-            m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+            m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, label));            
         }
         else
         {
-            //increase local error of winner
-            m_Neurons[m_NumWinner].setCurPointDist(p); //recalculate distance between winner and point because it might distort via threshold estimation
-            m_Neurons[m_NumWinner].updateError();  
-        
-            updateEdgeWinSecWin();
             incrementEdgeAgeFromWinner();
-            m_Neurons[m_NumWinner].incrementLocalSignals();
+            updateEdgeWinSecWin();
+            m_Neurons[m_NumWinner].incrementLocalSignals();            
+            m_Neurons[m_NumWinner].evalAndSetDensity(midDistNeighbours(m_NumWinner));
+            
             updateWeights(p);
             deleteOldEdges();
         }
     }
-
-    void Soinn::updateEdgeWinSecWin()
-    {
-        m_Neurons[m_NumWinner].updateEdge(m_NumSecondWinner);
-        m_Neurons[m_NumSecondWinner].updateEdge(m_NumWinner);
-    }
-
-    void Soinn::incrementEdgeAgeFromWinner()
+    
+    void ESoinn::incrementEdgeAgeFromWinner()
     {
         //update edges emanant from winner
         std::vector<uint32_t> neighbours = m_Neurons[m_NumWinner].incrementEdgesAge();
@@ -177,8 +157,35 @@ namespace nn
             m_Neurons[num].incrementConcreteEdgeAge(m_NumWinner);
         }
     }
+    
+    //Need to testing because it differs from Soinn
+    void ESoinn::updateEdgeWinSecWin()
+    {
+        //create edge if although one of neurons hasn't class label or if their class labels are equal
+        if (m_Neurons[m_NumWinner].curClass() == 0 || m_Neurons[m_NumSecondWinner].curClass() == 0 ||
+            m_Neurons[m_NumWinner].curClass() == m_Neurons[m_NumSecondWinner].curClass())
+        {
+            m_Neurons[m_NumWinner].updateEdge(m_NumSecondWinner);
+            m_Neurons[m_NumSecondWinner].updateEdge(m_NumWinner);
+        }
+        //else delete edge
+        else
+        {
+            m_Neurons[m_NumWinner].deleteConcreteNeighbour(m_NumSecondWinner);
+            m_Neurons[m_NumSecondWinner].deleteConcreteNeighbour(m_NumWinner);
+        }        
+    }
 
-    void Soinn::updateWeights(const wv::Point* p)
+    double ESoinn::midDistNeighbours(uint32_t num_neuron)
+    {
+        std::vector<uint32_t> neighbours = m_Neurons.at(num_neuron).getNeighbours();
+        double sum_dist = 0;
+        for (uint32_t num: neighbours)
+            sum_dist += m_Neurons[num_neuron].setCurPointDist(m_Neurons.at(num).getWv());
+        return sum_dist / (double) neighbours.size();    
+    }
+
+    void ESoinn::updateWeights(const wv::Point* p)
     {
         //update winner weights
         alr::AdaptLearnRateSoinn alr_win(0, m_Neurons[m_NumWinner].localSignals()); //The first parameter isn't important for soinn training
@@ -192,107 +199,178 @@ namespace nn
             m_Neurons[num].getWv()->updateWeightVector(p, &alr_neigh, 1);
         }
     }
-    
-    void Soinn::InsertConcreteNeuron(const wv::Point* p)
-    {
-        uint32_t size = p->getNumDimensions();
-        cont::StaticArray<double> coords(size);
-        for (uint32_t i = 0; i < size; i++)
-            coords[i] = p->getConcreteCoord(i);
 
-        wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));
-    }
-
-    void Soinn::InsertConcreteEdge(uint32_t neur1, uint32_t neur2)
-    {
-        m_Neurons[neur1].updateEdge(neur2);
-        m_Neurons[neur2].updateEdge(neur1);    
-    }
-    
-    void Soinn::deleteOldEdges()
+    void ESoinn::deleteOldEdges()
     {
         for (auto& s: m_Neurons)
             s.deleteOldEdges(m_AgeMax);
     }
-
-    void Soinn::insertNode()
+    
+    bool ESoinn::isNodeAxis(uint32_t num_neuron)
     {
-        //find neuron with max local error
-        double max_error = -1, cur_error = 0;
-        uint32_t num_neuron_max_err = 0;
+        std::vector<uint32_t> neighbours = m_Neurons.at(num_neuron).getNeighbours();
+        double cur_density = m_Neurons[num_neuron].density();
+        double max_density = 0;
+        uint32_t neuron_max_density = 0;
+        for (uint32_t num: neighbours)
+        {
+            if (max_density < m_Neurons[num].density())
+            {
+                max_density = m_Neurons[num].density();
+                neuron_max_density = num;
+            }
+        }
+        if (max_density > cur_density)
+        {
+            m_Neurons[num_neuron].setNeighbourMaxDensity(neuron_max_density);
+            return false;
+        }
+        m_Neurons[num_neuron].setNeighbourMaxDensity(num_neuron);
+        return true;
+    }
+    
+    uint32_t ESoinn::findAxisForNode(uint32_t number)
+    {
+        uint32_t cur_neuron = number;
+        uint32_t max_density_neighbour = m_Neurons[cur_neuron].neighbourMaxDensity();
+        while(cur_neuron != max_density_neighbour)
+        {
+            cur_neuron = max_density_neighbour;
+            max_density_neighbour = m_Neurons[cur_neuron].neighbourMaxDensity();            
+        }
+        return cur_neuron;
+    }
+    
+    double ESoinn::meanDensity(uint32_t class_number)
+    {
+        uint32_t num_neurons = 0;
+        double sum = 0;
+        for (const auto& neur: m_Neurons)
+        {
+            if (neur.is_deleted())
+                continue;
+            
+            if (neur.curClass() == class_number)
+            {
+                num_neurons++;
+                sum += neur.density();
+            }
+        }
+
+        return sum / (double) num_neurons;        
+    }
+    
+    double ESoinn::getAlpha(double maxDensity, double meanDensity)
+    {
+        double alpha = 0;
+        if (maxDensity < 3 * meanDensity && maxDensity >= 2 * meanDensity)
+            alpha = 0.5;
+        else if (maxDensity >= 3 * meanDensity)
+            alpha = 1.0;
+        return alpha;         
+    }
+    
+    void ESoinn::updateClassLabels()
+    {
+        uint32_t num_axis = 1;
+        std::map<uint32_t, uint32_t> axis; //axis_label => number of node
+        //find axis
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
             if (m_Neurons[i].is_deleted())
                 continue;
-            cur_error = m_Neurons[i].error();
-            if (cur_error > max_error)
+            
+            if (isNodeAxis(i))
             {
-                max_error = cur_error;
-                num_neuron_max_err = i;
+                //insert new axis
+                axis.emplace(num_axis, i);
+                num_axis++;
             }
         }
         
-        //find its neighbour with max local error
-        std::vector<uint32_t> neighbours = m_Neurons[num_neuron_max_err].getNeighbours();
-        max_error = -1, cur_error = 0;
-        uint32_t num_sec_neuron_max_err = 0;
-        for (const uint32_t s: neighbours)
+        std::map<uint32_t, uint32_t> node_axis; //node => axis
+        //find axis for each node
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
-            if (m_Neurons[s].is_deleted())
+            if (m_Neurons[i].is_deleted())
                 continue;
-            cur_error = m_Neurons[s].error();
-            if (cur_error > max_error)
+            
+            uint32_t num_axis = findAxisForNode(i);
+            node_axis.emplace(i, num_axis);
+            m_Neurons[i].setCurClass(num_axis);
+        }
+
+        //iterate all edges
+        std::map<uint32_t, uint32_t> mergeClasses;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            std::vector<uint32_t> neighbours = m_Neurons.at(i).getNeighbours();
+            for (uint32_t num: neighbours)
             {
-                max_error = cur_error;
-                num_sec_neuron_max_err = s;
+                if (num <= i)
+                    continue;
+                
+                if (m_Neurons.at(i).curClass() != m_Neurons.at(num).curClass())
+                {
+                    const uint32_t A_axes = node_axis.at(i);
+                    const uint32_t B_axes = node_axis.at(num);
+                    assert(A_axes != B_axes);
+                        
+                    const double Amax = m_Neurons.at(A_axes).density();
+                    const double Bmax = m_Neurons.at(B_axes).density();
+                    const double min_density = std::min(m_Neurons.at(i).density(), m_Neurons.at(num).density());
+                    if (min_density > getAlpha(Amax, meanDensity(i)) * Amax ||
+                        min_density > getAlpha(Bmax, meanDensity(num)) * Bmax)
+                    {
+                        //Add two classes as classes 
+                        //Классу num нужно присвоить метки класса i
+                        mergeClasses.emplace(std::min(A_axes, B_axes), std::max(A_axes, B_axes));
+                    }
+                }
             }
         }
-        
-        //set error radius of neurons
-        m_Neurons[num_neuron_max_err].calcErrorRadius();
-        m_Neurons[num_sec_neuron_max_err].calcErrorRadius();
 
-        //create new neuron
-        neuron::SoinnNeuron sn(&m_Neurons[num_neuron_max_err], &m_Neurons[num_sec_neuron_max_err], m_Alpha1, m_Alpha2, m_Alpha3);
-
-        //decrease error and number of local signals
-        m_Neurons[num_neuron_max_err].changeError(m_Betta);
-        m_Neurons[num_sec_neuron_max_err].changeError(m_Betta);
-
-        m_Neurons[num_neuron_max_err].changeLocalSignals(m_Gamma);
-        m_Neurons[num_sec_neuron_max_err].changeLocalSignals(m_Gamma);
-
-        //check if insertion is successful
-        if (m_Neurons[num_neuron_max_err].isInsertionSuccesfull() and 
-            m_Neurons[num_sec_neuron_max_err].isInsertionSuccesfull() and
-            sn.isInsertionSuccesfull())
+        //merge classes
+        bool is_change = true;
+        for (auto& neur: m_Neurons)
         {
-            //insertion is successfull. Add new neuron and replace edges
-            m_Neurons.push_back(sn);
+            if (neur.is_deleted())
+                continue; 
             
-            //replace edges
-            m_Neurons[num_neuron_max_err].replaceNeighbour(num_sec_neuron_max_err, m_Neurons.size() - 1);
-            m_Neurons[num_sec_neuron_max_err].replaceNeighbour(num_neuron_max_err, m_Neurons.size() - 1);
-            
-            //add edges for new neuron
-            m_Neurons[m_Neurons.size() - 1].updateEdge(num_neuron_max_err);
-            m_Neurons[m_Neurons.size() - 1].updateEdge(num_sec_neuron_max_err);
-        }
-        else
-        {
-            //insertion isn't successful. Restore old parameters
-            m_Neurons[num_neuron_max_err].changeError(1.0 / m_Betta);
-            m_Neurons[num_sec_neuron_max_err].changeError(1.0 / m_Betta);
-
-            m_Neurons[num_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
-            m_Neurons[num_sec_neuron_max_err].changeLocalSignals(1.0 / m_Gamma);
-
-            delete sn.getWv();
+            do
+            {
+                is_change = false;
+                const std::map<uint32_t, uint32_t>::const_iterator it = mergeClasses.find(neur.curClass());
+                if (it != mergeClasses.end())
+                {
+                    neur.setCurClass(it->second);
+                    is_change = true;
+                }
+            } while(is_change);
         }
     }
-    
-    double Soinn::calcAvgLocalSignals()
+
+    void ESoinn::deleteEdgesDiffClasses()
+    {
+        std::map<uint32_t, uint32_t> mergeClasses;
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            std::vector<uint32_t> neighbours = m_Neurons.at(i).getNeighbours();
+            for (uint32_t num: neighbours)
+            {
+                if (m_Neurons.at(i).curClass() != m_Neurons.at(num).curClass())
+                    m_Neurons.at(i).deleteConcreteNeighbour(num);
+            }
+        }
+    }
+
+    double ESoinn::calcAvgDensity()
     {
         m_NumEmptyNeurons = 0;
         double sumLocalSignals = 0;
@@ -303,12 +381,12 @@ namespace nn
                 m_NumEmptyNeurons++;
                 continue;
             }
-            sumLocalSignals += m_Neurons[i].localSignals();
+            sumLocalSignals += m_Neurons[i].density();
         }
         return sumLocalSignals / (double) (m_Neurons.size() - m_NumEmptyNeurons);
     }
-    
-    void Soinn::deleteNodes(bool only_no_neighbours)
+
+    void ESoinn::deleteNodes()
     {
         //list of neurons which we will delete
         std::vector<uint32_t> deleted_neurons;
@@ -322,9 +400,14 @@ namespace nn
                 delete m_Neurons[i].getWv();   
                 m_Neurons[i].setDeleted();
             }
-            else if (m_Neurons[i].getNumNeighbours() == 1 and !only_no_neighbours)
+            else if (m_Neurons[i].getNumNeighbours() == 1)
             {
-                if (m_Neurons[i].localSignals() < m_C * calcAvgLocalSignals())
+                if (m_Neurons[i].density() < m_C1 * calcAvgDensity())
+                    deleted_neurons.push_back(i);
+            }
+            else if (m_Neurons[i].getNumNeighbours() == 2)
+            {
+                if (m_Neurons[i].density() < m_C2 * calcAvgDensity())
                     deleted_neurons.push_back(i);
             }
         }
@@ -332,8 +415,8 @@ namespace nn
         for (uint32_t num: deleted_neurons)
             deleteNeuron(num);    
     }
-
-    void Soinn::deleteNeuron(uint32_t number)
+    
+    void ESoinn::deleteNeuron(uint32_t number)
     { 
         //delete neuron with number
         delete m_Neurons[number].getWv();   
@@ -347,8 +430,8 @@ namespace nn
             m_Neurons[i].deleteConcreteNeighbour(number);    
         }    
     }
-
-    bool Soinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, double epsilon, bool train_first_layer, double threshold_sec_layer)
+    
+    void ESoinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points)
     {
         //create vector with order of iterating by points
         std::vector<uint32_t> order;
@@ -357,80 +440,36 @@ namespace nn
         
         std::random_shuffle(order.begin(), order.end());
         uint32_t iteration = 1;
-        double error_before = getErrorOnNeuron();
 
         for (uint32_t i = 0; i < order.size(); i++)
         {
-            processNewPoint(points[order[i]].get(), train_first_layer, threshold_sec_layer);
+            processNewPoint(points[order[i]].get(), 0);
             if (iteration % m_Lambda == 0)
             {
                 log_netw->debug("iteration multiple lambda");
-                insertNode(); 
+                updateClassLabels();
+                deleteEdgesDiffClasses();
                 deleteNodes();
             }
             
             iteration++;
         }
-        //print all neurons
-        deleteNodes(true);
+        deleteNodes();
         SealNeuronVector();
         
-        double error_after = getErrorOnNeuron();
-        
-        log_netw->info((boost::format("Error before %g. Error after %g") % error_before % error_after).str());
         log_netw->info((boost::format("Network size = %d, number of empty neurons = %d") % m_Neurons.size() % m_NumEmptyNeurons).str());
-        return (std::abs(error_before - error_after) > epsilon);
     }
 
-    double Soinn::getErrorOnNeuron()
-    {
-        double error = 0;
-        uint32_t num_non_empty_neurons = 0;
-        for (const auto& s: m_Neurons)
-        {
-            if (!s.is_deleted())
-            {
-                error += s.error();
-                num_non_empty_neurons++;
-            }
-        }
-        //set max error for initial network of two neurons
-        if (m_Neurons.size() == 2)
-        {
-            error = std::numeric_limits<double>::max();
-            num_non_empty_neurons = 2;
-        }
-        m_NumEmptyNeurons = m_Neurons.size() - num_non_empty_neurons;
-        return error/num_non_empty_neurons;
-    }
-
-    void Soinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
-                             uint32_t num_iteration_first_layer, uint32_t num_iteration_second_layer)
+    void ESoinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
+                             uint32_t num_iteration_first_layer)
     {
         initialize(std::make_pair(points[points.size()/3].get(), points[points.size()*2/3].get()));
         uint32_t iteration = 1;
-        double epsilon = 0.005;
         //train first layer
         log_netw->info("********************Train first layer************************");
         while (iteration <= num_iteration_first_layer)
         {
-            trainOneEpoch(points, epsilon, true, 0);
-            log_netw->info("----------------------------------------------------------------------");
-            log_netw->info((boost::format("Iteration %d") % iteration).str());
-            iteration++;
-        }
-        std::vector<std::vector<uint32_t>> first_layer_clust;
-        findClustersMCL(first_layer_clust);
-
-        //train second layer
-        log_netw->info("********************Train second layer************************");
-        double threshold_sec_layer = calcThresholdSecondLayer(result);
-        log_netw->info((boost::format("Threshold of second layer %d") % threshold_sec_layer).str());
-        
-        iteration = 1;
-        while (iteration <= num_iteration_second_layer)
-        {
-            trainOneEpoch(points, epsilon, false, threshold_sec_layer);
+            trainOneEpoch(points);
             log_netw->info("----------------------------------------------------------------------");
             log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
@@ -438,7 +477,7 @@ namespace nn
         findClustersMCL(result);
     }
 
-    void Soinn::exportEdgesFile(const std::string& filename) const
+    void ESoinn::exportEdgesFile(const std::string& filename) const
     {
         std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second - the older one)
         uint32_t edge_weight = 1;
@@ -471,7 +510,7 @@ namespace nn
     }
 
     //find cluster for each point for built network
-    uint32_t Soinn::findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const
+    uint32_t ESoinn::findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const
     {
         double min_dist_main = std::numeric_limits<double>::max();
         double cur_dist = 0;
@@ -491,9 +530,9 @@ namespace nn
         return neuron_cluster.at(winner);
     }
 
-    void Soinn::SealNeuronVector()
+    void ESoinn::SealNeuronVector()
     {
-        std::vector<neuron::SoinnNeuron> newNeurons;
+        std::vector<neuron::ESoinnNeuron> newNeurons;
         uint32_t count_notnull = 0;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
@@ -529,98 +568,7 @@ namespace nn
         m_Neurons = newNeurons;        
     }
 
-    double Soinn::calcInnerClusterDistance() const
-    {
-        double overall_dist = 0;
-        uint32_t num_edges = 0;
-        for (uint32_t i = 0; i < m_Neurons.size(); i++)
-        {
-            for (uint32_t num: m_Neurons[i].getNeighbours())
-            {
-                overall_dist += m_Neurons[i].getWv()->calcDistance(m_Neurons[num].getWv());
-                num_edges++;
-            }
-        }
-        return overall_dist / (double) num_edges;
-    }
-
-    //Depth-first search
-    void Soinn::dfs(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const
-    {
-        marked[vert_number] = true;
-        concr_comp.push_back(vert_number);
-        for (uint32_t num: m_Neurons[vert_number].getNeighbours())
-        {
-            if (!marked[num])
-            {
-                dfs(marked, num, concr_comp);
-            }
-        }
-    }
-    
-    void Soinn::findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const //comp_number => vertex in component
-    {
-        uint32_t graph_vertex_num = m_Neurons.size();
-        cont::StaticArray<bool> marked(graph_vertex_num);
-
-        for (uint32_t i = 0; i < graph_vertex_num; i++)
-            marked[i] = false;
-
-        for (uint32_t i = 0; i < m_Neurons.size(); i++)
-        {
-            if (!marked[i])
-            {
-                std::vector<uint32_t> concr_comp;
-                dfs(marked, i, concr_comp);
-                conn_comp.push_back(concr_comp);
-            }
-        }
-    }
-
-    //Calculate between cluster distanse and sort it
-    void Soinn::calcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const
-    {
-        for (uint32_t i = 0; i < conn_comp.size(); i++)
-            for (uint32_t j = i + 1; j < conn_comp.size(); j++)
-                dist.push_back(calcDistanceBetweenTwoClusters(conn_comp[i], conn_comp[j]));
-        std::sort(dist.begin(), dist.end());        
-    }
-
-    double Soinn::calcDistanceBetweenTwoClusters(std::vector<uint32_t> cluster1, std::vector<uint32_t> cluster2) const
-    {
-        double min_dist = std::numeric_limits<double>::max();
-        for (uint32_t i = 0; i < cluster1.size(); i++)
-            for (uint32_t j = 0; j < cluster2.size(); j++)
-            {
-                double cur_dist = m_Neurons[cluster1[i]].getWv()->calcDistance(m_Neurons[cluster2[j]].getWv());
-                if (cur_dist < min_dist)
-                    min_dist = cur_dist;
-            }
-        return min_dist;    
-    }
-
-    double Soinn::calcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const
-    {
-        double inner_cluster_dist = calcInnerClusterDistance();
-        double second_layer_threshold = 0;
-
-        std::vector<double> between_cluster_dist;
-        calcBetweenClustersDistanceVector(clusters, between_cluster_dist);
-        
-        for (uint32_t i = 0; i < between_cluster_dist.size(); i++)
-        {
-            if (between_cluster_dist[i] >= inner_cluster_dist)
-            {
-                second_layer_threshold = between_cluster_dist[i];
-                break; 
-            }
-        }
-        if (second_layer_threshold == 0)
-            second_layer_threshold = inner_cluster_dist;
-        return second_layer_threshold;    
-    }
-
-    void Soinn::findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const
+    void ESoinn::findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const
     {
         //prepare input data for mcl
         exportEdgesFile(output_src_mcl);
@@ -653,5 +601,23 @@ namespace nn
         //remove temporary files
         std::remove(output_src_mcl.c_str());
         std::remove(output_mcl.c_str());
+    }
+
+    //Special functions for tests
+    void ESoinn::InsertConcreteNeuron(const wv::Point* p, const uint32_t neur_class)
+    {
+        uint32_t size = p->getNumDimensions();
+        cont::StaticArray<double> coords(size);
+        for (uint32_t i = 0; i < size; i++)
+            coords[i] = p->getConcreteCoord(i);
+
+        wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
+        m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, neur_class));
+    }
+
+    void ESoinn::InsertConcreteEdge(uint32_t neur1, uint32_t neur2)
+    {
+        m_Neurons[neur1].updateEdge(neur2);
+        m_Neurons[neur2].updateEdge(neur1);    
     }
 } //nn
