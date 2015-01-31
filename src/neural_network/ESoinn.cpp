@@ -6,6 +6,7 @@
 #include <fstream>
 #include <logger/logger.hpp>
 #include <neural_network/ESoinn.hpp>
+#include <unordered_set>
 
 namespace nn
 {
@@ -158,7 +159,6 @@ namespace nn
         }
     }
     
-    //Need to testing because it differs from Soinn
     void ESoinn::updateEdgeWinSecWin()
     {
         //create edge if although one of neurons hasn't class label or if their class labels are equal
@@ -182,7 +182,7 @@ namespace nn
         double sum_dist = 0;
         for (uint32_t num: neighbours)
             sum_dist += m_Neurons[num_neuron].setCurPointDist(m_Neurons.at(num).getWv());
-        return sum_dist / (double) neighbours.size();    
+        return (sum_dist == 0) ? 0 : sum_dist / (double) neighbours.size();    
     }
 
     void ESoinn::updateWeights(const wv::Point* p)
@@ -241,7 +241,7 @@ namespace nn
         return cur_neuron;
     }
     
-    double ESoinn::meanDensity(uint32_t class_number)
+    double ESoinn::meanDensity(uint32_t class_number) const
     {
         uint32_t num_neurons = 0;
         double sum = 0;
@@ -260,7 +260,7 @@ namespace nn
         return sum / (double) num_neurons;        
     }
     
-    double ESoinn::getAlpha(double maxDensity, double meanDensity)
+    double ESoinn::getAlpha(double maxDensity, double meanDensity) const
     {
         double alpha = 0;
         if (maxDensity < 3 * meanDensity && maxDensity >= 2 * meanDensity)
@@ -270,25 +270,17 @@ namespace nn
         return alpha;         
     }
     
-    void ESoinn::updateClassLabels()
+    void ESoinn::labelClasses(std::map<uint32_t, uint32_t>& node_axis)
     {
-        uint32_t num_axis = 1;
-        std::map<uint32_t, uint32_t> axis; //axis_label => number of node
-        //find axis
+        //find neighbour with max density for each neuron
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
             if (m_Neurons[i].is_deleted())
                 continue;
             
-            if (isNodeAxis(i))
-            {
-                //insert new axis
-                axis.emplace(num_axis, i);
-                num_axis++;
-            }
+            isNodeAxis(i);
         }
         
-        std::map<uint32_t, uint32_t> node_axis; //node => axis
         //find axis for each node
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
@@ -299,9 +291,12 @@ namespace nn
             node_axis.emplace(i, num_axis);
             m_Neurons[i].setCurClass(num_axis);
         }
+    }
 
+    //mergeClasses: node => set of neighbours
+    void ESoinn::findMergedClasses(const std::map<uint32_t, uint32_t>& node_axis, std::map<uint32_t, std::set<uint32_t>>& mergeClasses) const
+    {
         //iterate all edges
-        std::map<uint32_t, uint32_t> mergeClasses;
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
             if (m_Neurons[i].is_deleted())
@@ -322,34 +317,78 @@ namespace nn
                     const double Amax = m_Neurons.at(A_axes).density();
                     const double Bmax = m_Neurons.at(B_axes).density();
                     const double min_density = std::min(m_Neurons.at(i).density(), m_Neurons.at(num).density());
-                    if (min_density > getAlpha(Amax, meanDensity(i)) * Amax ||
-                        min_density > getAlpha(Bmax, meanDensity(num)) * Bmax)
+                    if (min_density > getAlpha(Amax, meanDensity(A_axes)) * Amax ||
+                        min_density > getAlpha(Bmax, meanDensity(B_axes)) * Bmax)
                     {
-                        //Add two classes as classes 
-                        //Классу num нужно присвоить метки класса i
-                        mergeClasses.emplace(std::min(A_axes, B_axes), std::max(A_axes, B_axes));
+                        //Add two classes as need to merge 
+                        mergeClasses[A_axes].emplace(B_axes);
+                        mergeClasses[B_axes].emplace(A_axes);
                     }
                 }
             }
         }
+    }
+
+    //Depth-first search
+    void dfs(std::unordered_set<uint32_t>& marked, uint32_t vert_number,
+             std::set<uint32_t>& concr_comp, const std::map<uint32_t, std::set<uint32_t>>& src)
+    {
+        marked.emplace(vert_number);
+        concr_comp.emplace(vert_number);
+        for (uint32_t num: src.at(vert_number))
+        {
+            if (marked.count(num) == 0)
+            {
+                dfs(marked, num, concr_comp, src);
+            }
+        }
+    }
+    
+    void ESoinn::findAxesMapping(const std::map<uint32_t, std::set<uint32_t>>& src, std::map<uint32_t, uint32_t>& mapping) const
+    {
+        std::unordered_set<uint32_t> marked_axes;
+        std::vector<std::set<uint32_t>> conn_comp;
+
+        for (const auto& it: src)
+        {
+            if (marked_axes.count(it.first) == 0)
+            {
+                std::set<uint32_t> concr_comp;
+                dfs(marked_axes, it.first, concr_comp, src);
+                conn_comp.push_back(concr_comp);
+            }
+        }
+
+        for (const auto& it: conn_comp)
+        {
+            const uint32_t min_vertex = *(it.begin());
+            for (const uint32_t& vertex: it)
+                mapping.emplace(vertex, min_vertex);
+        }
+    }
+    
+    void ESoinn::updateClassLabels()
+    {
+        std::map<uint32_t, uint32_t> node_axis; //node => axis
+        labelClasses(node_axis);
+
+        //find classes (numbers of axis) which we need to merge
+        std::map<uint32_t, std::set<uint32_t>> mergeClasses;
+        findMergedClasses(node_axis, mergeClasses); 
+        
+        //mapping for neuron classes
+        std::map<uint32_t, uint32_t> mapping;
+        findAxesMapping(mergeClasses, mapping);
 
         //merge classes
-        bool is_change = true;
         for (auto& neur: m_Neurons)
         {
             if (neur.is_deleted())
                 continue; 
             
-            do
-            {
-                is_change = false;
-                const std::map<uint32_t, uint32_t>::const_iterator it = mergeClasses.find(neur.curClass());
-                if (it != mergeClasses.end())
-                {
-                    neur.setCurClass(it->second);
-                    is_change = true;
-                }
-            } while(is_change);
+            const std::map<uint32_t, uint32_t>::const_iterator it = mapping.find(neur.curClass());
+            if (it != mapping.end())
+                neur.setCurClass(it->second);
         }
     }
 

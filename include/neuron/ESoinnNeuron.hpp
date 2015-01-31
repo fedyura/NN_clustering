@@ -107,6 +107,12 @@ namespace neuron
             return m_Density;
         }
 
+        //for tests
+        void setDensity(double density)
+        {
+            m_Density = density;
+        }
+
         void setNeighbourMaxDensity(uint32_t neighbour)
         {
             m_NeighbourMaxDensity = neighbour;

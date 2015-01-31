@@ -1,9 +1,11 @@
 #ifndef __NEURAL_NETWORK_ESOINN_HPP__
 #define __NEURAL_NETWORK_ESOINN_HPP__
 
+#include <map>
 #include <memory>
 #include <neural_network/Common.hpp>
 #include <neuron/ESoinnNeuron.hpp>
+#include <set>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 
 namespace nn
@@ -38,8 +40,23 @@ namespace nn
         {
             return m_NumSecondWinner;
         }
+
+        void setWinner(uint32_t num_winner)
+        {
+            m_NumWinner = num_winner;
+        }
+
+        void setSecWinner(uint32_t num_sec_winner)
+        {
+            m_NumSecondWinner = num_sec_winner;
+        }
         
         neuron::ESoinnNeuron getNeuron(int num) const
+        {
+            return m_Neurons.at(num);
+        }
+
+        neuron::ESoinnNeuron& getNeuron(int num)
         {
             return m_Neurons.at(num);
         }
@@ -71,8 +88,12 @@ namespace nn
         
         bool isNodeAxis(uint32_t num_neuron);
         uint32_t findAxisForNode(uint32_t number);
-        double meanDensity(uint32_t class_number);
-        double getAlpha(double maxDensity, double meanDensity);
+        double meanDensity(uint32_t class_number) const;
+        double getAlpha(double maxDensity, double meanDensity) const;
+        void labelClasses(std::map<uint32_t, uint32_t>& node_axis);
+        void findMergedClasses(const std::map<uint32_t, uint32_t>& node_axis, std::map<uint32_t, std::set<uint32_t>>& mergeClasses) const;
+        void findAxesMapping(const std::map<uint32_t, std::set<uint32_t>>& src, std::map<uint32_t, uint32_t>& mapping) const;
+        
         void updateClassLabels();
         void deleteEdgesDiffClasses();
         double calcAvgDensity();
