@@ -429,6 +429,7 @@ namespace nn
     {
         //list of neurons which we will delete
         std::vector<uint32_t> deleted_neurons;
+        //double avg_density = calcAvgDensity();
         for (uint32_t i = 0; i < m_Neurons.size(); i++)
         {
             if (m_Neurons[i].is_deleted())
@@ -439,7 +440,8 @@ namespace nn
                 delete m_Neurons[i].getWv();   
                 m_Neurons[i].setDeleted();
             }
-            else if (m_Neurons[i].getNumNeighbours() == 1)
+            
+            if (m_Neurons[i].getNumNeighbours() == 1)
             {
                 if (m_Neurons[i].density() < m_C1 * calcAvgDensity())
                     deleted_neurons.push_back(i);
@@ -453,6 +455,19 @@ namespace nn
         //delete neurons from list
         for (uint32_t num: deleted_neurons)
             deleteNeuron(num);    
+
+        //delete neurons without neighbours (it may appeared after deletion other neurons)
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            if (m_Neurons[i].getNumNeighbours() == 0)
+            {
+                delete m_Neurons[i].getWv();   
+                m_Neurons[i].setDeleted();
+            }
+        }
     }
     
     void ESoinn::deleteNeuron(uint32_t number)
@@ -638,8 +653,23 @@ namespace nn
         }
 
         //remove temporary files
-        std::remove(output_src_mcl.c_str());
-        std::remove(output_mcl.c_str());
+        //std::remove(output_src_mcl.c_str());
+        //std::remove(output_mcl.c_str());
+    }
+    
+    void ESoinn::dumpNetwork() const
+    {
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+
+            log_netw->debug((boost::format("neuron = %d:") % i).str());
+            for (const uint32_t num: m_Neurons[i].getNeighbours())
+            {
+                log_netw->debug((boost::format(" %d") % num).str());
+            }
+        }
     }
 
     //Special functions for tests

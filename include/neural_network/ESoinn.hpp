@@ -11,7 +11,7 @@
 namespace nn
 {
     const std::string mcl_path = "/home/yura/local/bin/mcl ";
-    const std::string output_src_mcl = "soinn_output_mcl.tmp";
+    const std::string output_src_mcl = "esoinn_output_mcl.tmp";
 
     class ESoinn
     {
@@ -24,6 +24,7 @@ namespace nn
                           uint32_t num_iteration_first_layer);
         void exportEdgesFile(const std::string& filename) const;
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
+        void dumpNetwork() const;
         
         //functions for testing
         double getNeuronCoord(uint32_t num, uint32_t coord) const
