@@ -3,16 +3,17 @@
 
 #include <assert.h>
 #include <neuron/NeuralGasNeuron.hpp>
+#include <string>
 
 namespace neuron
 {
     class ESoinnNeuron: public AbstractNeuron
     {
       public:
-        ESoinnNeuron(wv::AbstractWeightVector* wv, uint32_t srcClass)
+        ESoinnNeuron(wv::AbstractWeightVector* wv, std::string label)
           : AbstractNeuron(wv)
           , m_IsDeleted(false)
-          , m_SrcClass(srcClass)
+          , m_Label(label)
           , m_CurClass(0) 
           , m_NeighbourMaxDensity(0) 
           , m_LocalSignals(1)
@@ -22,7 +23,7 @@ namespace neuron
         ESoinnNeuron()
           : AbstractNeuron(NULL)
           , m_IsDeleted(false)
-          , m_SrcClass(0)
+          , m_Label("0")
           , m_CurClass(0)
           , m_NeighbourMaxDensity(0) 
           , m_LocalSignals(1)
@@ -148,14 +149,19 @@ namespace neuron
             return m_LocalSignals;
         }
 
-        uint32_t getNumNeighbours()
+        uint32_t getNumNeighbours() const
         {
             return m_Neighbours.size();
         }
 
+        std::string label() const
+        {
+            return m_Label;
+        }
+
       private:        
         bool m_IsDeleted;
-        uint32_t m_SrcClass;
+        std::string m_Label;
         uint32_t m_CurClass;
         uint32_t m_NeighbourMaxDensity;                   
         double m_LocalSignals;   

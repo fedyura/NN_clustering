@@ -70,7 +70,7 @@ class TestESoinn: public ESoinn
         InsertConcreteEdge(neur1, neur2);
     }
 
-    void testInsertNeuron(const wv::Point* p, uint32_t num_class = 0)
+    void testInsertNeuron(const wv::Point* p, std::string num_class = "0")
     {
         InsertConcreteNeuron(p, num_class);
     }

@@ -22,9 +22,12 @@ namespace nn
 
         void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
                           uint32_t num_iteration_first_layer);
+        void trainNetworkNoiseReduction(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels,
+                                        uint32_t num_iteration_first_layer);
         void exportEdgesFile(const std::string& filename) const;
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
         void dumpNetwork() const;
+        void printNetworkNodesFile(const std::string& filename) const;
         
         //functions for testing
         double getNeuronCoord(uint32_t num, uint32_t coord) const
@@ -74,11 +77,11 @@ namespace nn
         
       protected:
         //Initialize network with two points from dataset (src_label - source class (label) of this two points) 
-        void initialize(const std::pair<wv::Point*, wv::Point*>& points, const std::pair<uint32_t, uint32_t>& src_label = std::make_pair(0, 0));
+        void initialize(const std::pair<wv::Point*, wv::Point*>& points, const std::pair<std::string, std::string>& src_label = std::make_pair("0", "0"));
 
         std::pair<double, double> findWinners(const wv::Point* p);
         double evalThreshold(uint32_t num_neuron);
-        void processNewPoint(const wv::Point* p, uint32_t label);
+        void processNewPoint(const wv::Point* p, std::string label);
         
         void incrementEdgeAgeFromWinner();
         void updateEdgeWinSecWin();
@@ -105,11 +108,11 @@ namespace nn
         void findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const;
         
         //for tests
-        void InsertConcreteNeuron(const wv::Point* p, const uint32_t neur_class = 0); 
+        void InsertConcreteNeuron(const wv::Point* p, const std::string& neur_class = "0"); 
         void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
       
       private:
-        void trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points);
+        void trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels = std::vector<std::string> ());
         void SealNeuronVector();
         
         uint32_t m_NumDimensions;

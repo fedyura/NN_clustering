@@ -39,7 +39,7 @@ namespace nn
             }
     }
     
-    void ESoinn::initialize(const std::pair<wv::Point*, wv::Point*>& points, const std::pair<uint32_t, uint32_t>& src_label)
+    void ESoinn::initialize(const std::pair<wv::Point*, wv::Point*>& points, const std::pair<std::string, std::string>& src_label)
     {
         if (m_NumDimensions != points.first->getNumDimensions())
             throw std::runtime_error("Number of dimensions for data doesn't correspond dimension of neural network");
@@ -120,7 +120,7 @@ namespace nn
         return threshold;
     }
 
-    void ESoinn::processNewPoint(const wv::Point* p, uint32_t label)
+    void ESoinn::processNewPoint(const wv::Point* p, std::string label)
     {
         std::pair<double, double> dist = findWinners(p);
         double winner_threshold = evalThreshold(m_NumWinner);
@@ -485,7 +485,7 @@ namespace nn
         }    
     }
     
-    void ESoinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points)
+    void ESoinn::trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels)
     {
         //create vector with order of iterating by points
         std::vector<uint32_t> order;
@@ -497,7 +497,7 @@ namespace nn
 
         for (uint32_t i = 0; i < order.size(); i++)
         {
-            processNewPoint(points[order[i]].get(), 0);
+            processNewPoint(points[order[i]].get(), (labels.empty()) ? "0" : labels[order[i]]);
             if (iteration % m_Lambda == 0)
             {
                 log_netw->debug("iteration multiple lambda");
@@ -530,7 +530,27 @@ namespace nn
         }
         findClustersMCL(result);
     }
-
+    
+    void ESoinn::trainNetworkNoiseReduction(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels,
+                                            uint32_t num_iteration_first_layer)
+    {
+        if (points.size() != labels.size())
+            throw std::runtime_error("Size of labels vector differs from size of points vector");
+        const uint32_t first_neuron_index = points.size()/3;
+        const uint32_t sec_neuron_index = points.size()*2/3;
+        initialize(std::make_pair(points[first_neuron_index].get(), points[sec_neuron_index].get()), std::make_pair(labels[first_neuron_index], labels[sec_neuron_index]));
+        uint32_t iteration = 1;
+        //train first layer
+        log_netw->info("********************Train first layer************************");
+        while (iteration <= num_iteration_first_layer)
+        {
+            trainOneEpoch(points, labels);
+            log_netw->info("----------------------------------------------------------------------");
+            log_netw->info((boost::format("Iteration %d") % iteration).str());
+            iteration++;
+        }
+    }
+    
     void ESoinn::exportEdgesFile(const std::string& filename) const
     {
         std::unordered_map<uint64_t, double> edges; //edge => weight. Edge is two neurons (first - the smaller 32bit and second - the older one)
@@ -672,8 +692,27 @@ namespace nn
         }
     }
 
+    void ESoinn::printNetworkNodesFile(const std::string& filename) const
+    {
+        std::ofstream of(filename);
+        for (const auto& neur: m_Neurons)
+        {
+            if (neur.is_deleted())
+                continue;
+            
+            const wv::AbstractWeightVector* av = neur.getWv();
+            for (uint32_t j = 0; j < av->getNumDimensions(); j++)
+            {
+                of << av->getConcreteCoord(j) << ",";
+            }
+            of << neur.label() << std::endl;
+        }
+
+        of.close();
+    }
+
     //Special functions for tests
-    void ESoinn::InsertConcreteNeuron(const wv::Point* p, const uint32_t neur_class)
+    void ESoinn::InsertConcreteNeuron(const wv::Point* p, const std::string& neur_class)
     {
         uint32_t size = p->getNumDimensions();
         cont::StaticArray<double> coords(size);

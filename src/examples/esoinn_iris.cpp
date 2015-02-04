@@ -26,7 +26,7 @@ int main (int argc, char* argv[])
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
-        
+    
     std::string output_filename = "points";
     //25, 50, 1, 0.1
     nn::ESoinn ns(NumDimensionsIrisDataset, 50 /*age_max*/, 150 /*lambda*/, 1.0 /*C1*/, 0.1 /*C2*/); 
@@ -47,7 +47,7 @@ int main (int argc, char* argv[])
         i++;
         if (i % 50 == 0) log_netw->info("\n", true);
     }
-            
+                
     log_netw->info("\n", true);
     log_netw->info("The program is succesfully ended");
     return 0;
