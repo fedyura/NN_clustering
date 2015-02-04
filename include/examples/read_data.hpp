@@ -76,7 +76,10 @@ namespace ex
         {
             for (uint32_t i = 0; i < num_dimensions; i++)
             {
-                arr[i] = (p[i] - min_max_values[i].second) / (min_max_values[i].first - min_max_values[i].second);
+                double diff = (min_max_values[i].first - min_max_values[i].second);
+                if (diff != 0)
+                    arr[i] = (p[i] - min_max_values[i].second) / (min_max_values[i].first - min_max_values[i].second);
+                else arr[i] = 0;    
             }
             
             std::shared_ptr<wv::WeightVectorContEuclidean> swv(new wv::WeightVectorContEuclidean(arr));

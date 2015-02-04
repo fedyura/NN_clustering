@@ -9,3 +9,6 @@ TARGET_LINK_LIBRARIES(SoinnIris soinn weight_vector)
 
 ADD_EXECUTABLE (ESoinnIris esoinn_iris.cpp)
 TARGET_LINK_LIBRARIES(ESoinnIris esoinn weight_vector)
+
+ADD_EXECUTABLE (ESoinnForest esoinn_forest.cpp)
+TARGET_LINK_LIBRARIES(ESoinnForest esoinn weight_vector)
