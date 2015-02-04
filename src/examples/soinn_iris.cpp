@@ -10,7 +10,7 @@ namespace
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("Soinn", logger::LogLevels::DEBUG);
     
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
-
+    const uint32_t NumDimensionsIrisDataset = 4;
     /*
     void readMCLAnswer(const std::string& filename)
     {
@@ -43,7 +43,7 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readIrisDataSet("iris_dataset", points, answers))
+    if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
@@ -54,7 +54,7 @@ int main (int argc, char* argv[])
     //0x2x4
     //nn::Soinn ns(ex::NumDimensionsIrisDataSet, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 50 /*lambda*/, 0.5); 
     
-    nn::Soinn ns(ex::NumDimensionsIrisDataSet, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 50 /*lambda*/, 0.5); 
+    nn::Soinn ns(NumDimensionsIrisDataset, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 50 /*lambda*/, 0.5); 
         
     std::vector<std::vector<uint32_t>> conn_comp;
     ns.trainNetwork(points, conn_comp, 50, 2);   

@@ -11,9 +11,6 @@
 
 namespace ex
 {
-    const uint32_t NumDimensionsIrisDataSet = 4;
-    const uint32_t NumClustersIrisDataSet = 3;
-
     std::vector<std::string> split(const std::string& s, char delim)
     {
         std::vector<std::string> elems;
@@ -25,14 +22,15 @@ namespace ex
         return elems;
     }
 
-    bool readIrisDataSet(const std::string& filename, std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::string>& answers)
+    bool readDataSet(const std::string& filename, const uint32_t num_dimensions, std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::string>& answers)
     {
-        std::vector<std::array<double, NumDimensionsIrisDataSet>> coords;
-        std::array<std::pair<double, double>, NumDimensionsIrisDataSet> min_max_values; //min and max values by each coord
-        for (uint32_t i = 0; i < NumDimensionsIrisDataSet; i++)
+        std::vector<std::vector<double>> coords;
+        std::vector<std::pair<double, double>> min_max_values;
+        min_max_values.resize(num_dimensions);
+        for (uint32_t i = 0; i < num_dimensions; i++)
         {
             min_max_values[i].first = 0; //max value
-            min_max_values[i].second = 1000; //min value
+            min_max_values[i].second = std::numeric_limits<double>::max(); //min value
         }
                 
         std::ifstream fi(filename);
@@ -46,14 +44,15 @@ namespace ex
         while (std::getline(fi, line) and !line.empty())
         {
             std::vector<std::string> items = split(line, ',');
-            if (items.size() != 5)
+            if (items.size() != num_dimensions + 1)
             {
                 std::cerr << "Error! Wrong line format" << std::endl;
                 return false;
             }
             
-            std::array<double, NumDimensionsIrisDataSet> arr;
-            for (uint32_t i = 0; i < NumDimensionsIrisDataSet; i++)
+            std::vector<double> arr;
+            arr.resize(num_dimensions);
+            for (uint32_t i = 0; i < num_dimensions; i++)
             {
                  std::istringstream iss(items[i]);
                  double number = 0;
@@ -67,15 +66,15 @@ namespace ex
                  min_max_values[i].second = std::min(min_max_values[i].second, number);
             }
             coords.push_back(arr);
-            answers.push_back(items[4]);
+            answers.push_back(items[num_dimensions]);
         }
         fi.close();
         //normalize values
         
-        cont::StaticArray<double> arr(NumDimensionsIrisDataSet);
+        cont::StaticArray<double> arr(num_dimensions);
         for (const auto& p: coords)
         {
-            for (uint32_t i = 0; i < NumDimensionsIrisDataSet; i++)
+            for (uint32_t i = 0; i < num_dimensions; i++)
             {
                 arr[i] = (p[i] - min_max_values[i].second) / (min_max_values[i].first - min_max_values[i].second);
             }

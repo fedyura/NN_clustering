@@ -10,6 +10,7 @@ namespace
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("NeuralGas");
     
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
+    const uint32_t NumDimensionsIrisDataset = 4;
 
     void readMCLAnswer(const std::string& filename)
     {
@@ -36,7 +37,7 @@ namespace
         std::vector<std::shared_ptr<wv::Point>> points;
         std::vector<std::string> answers;
 
-        if (!ex::readIrisDataSet("iris_dataset", points, answers))
+        if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
         {
             std::cerr << "readIrisDataSet function works incorrect" << std::endl;
         }
@@ -69,7 +70,7 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readIrisDataSet("iris_dataset", points, answers))
+    if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
@@ -78,7 +79,7 @@ int main (int argc, char* argv[])
     std::string output_filename = "points";
     //good result
     //0x2x4
-    nn::NeuralGas ng(ex::NumDimensionsIrisDataSet, 0.2, 0.006, 0.5, 0.995, 100, 50); 
+    nn::NeuralGas ng(NumDimensionsIrisDataset, 0.2, 0.006, 0.5, 0.995, 100, 50); 
     ng.trainNetwork(points, 0.05);   
     ng.exportEdgesFile(output_filename);
     

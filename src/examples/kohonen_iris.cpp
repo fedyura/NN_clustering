@@ -7,6 +7,8 @@
 namespace
 {
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("KohonenNetwork");
+    const uint32_t NumDimensionsIrisDataset = 4;
+    const uint32_t NumClustersIrisDataset = 3;
 }
 
 int main (int argc, char* argv[])
@@ -16,14 +18,14 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readIrisDataSet("iris_dataset", points, answers))
+    if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
     {
         log_netw->error("readIrisDataSet function works incorrect");
     }
         
     //0x3x14
     alr::KohonenParameters kp(0.4, 1.5, 0.9, 1.3);
-    nn::KohonenNN knn(ex::NumClustersIrisDataSet, ex::NumDimensionsIrisDataSet, kp, 0); 
+    nn::KohonenNN knn(NumClustersIrisDataset, NumDimensionsIrisDataset, kp, 0); 
 
     knn.trainNetwork(points, 0.000001);
     

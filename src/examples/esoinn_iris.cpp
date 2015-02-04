@@ -10,6 +10,7 @@ namespace
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("ESoinn", logger::LogLevels::DEBUG);
     
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
+    const uint32_t NumDimensionsIrisDataset = 4;
 }
 
 int main (int argc, char* argv[])
@@ -21,14 +22,14 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readIrisDataSet("iris_dataset", points, answers))
+    if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
         
     std::string output_filename = "points";
     //25, 50, 1, 0.1
-    nn::ESoinn ns(ex::NumDimensionsIrisDataSet, 50 /*age_max*/, 150 /*lambda*/, 1.0 /*C1*/, 0.1 /*C2*/); 
+    nn::ESoinn ns(NumDimensionsIrisDataset, 50 /*age_max*/, 150 /*lambda*/, 1.0 /*C1*/, 0.1 /*C2*/); 
         
     std::vector<std::vector<uint32_t>> conn_comp;
     ns.trainNetwork(points, conn_comp, 20);  
