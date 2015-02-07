@@ -21,13 +21,14 @@ namespace nn
         ~ESoinn();
 
         void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
-                          uint32_t num_iteration_first_layer);
+                                  const std::vector<std::string>& labels, uint32_t num_iteration_first_layer);
         void trainNetworkNoiseReduction(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels,
                                         uint32_t num_iteration_first_layer);
         void exportEdgesFile(const std::string& filename) const;
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
         void dumpNetwork() const;
         void printNetworkNodesFile(const std::string& filename) const;
+        void printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters, uint32_t start_value = 0) const;
         
         //functions for testing
         double getNeuronCoord(uint32_t num, uint32_t coord) const

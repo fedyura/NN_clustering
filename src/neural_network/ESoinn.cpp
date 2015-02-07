@@ -515,15 +515,17 @@ namespace nn
     }
 
     void ESoinn::trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
-                             uint32_t num_iteration_first_layer)
+                              const std::vector<std::string>& labels, uint32_t num_iteration_first_layer)
     {
-        initialize(std::make_pair(points[points.size()/3].get(), points[points.size()*2/3].get()));
+        const uint32_t first_neuron_index = points.size()/3;
+        const uint32_t sec_neuron_index = points.size()*2/3;
+        initialize(std::make_pair(points[first_neuron_index].get(), points[sec_neuron_index].get()), std::make_pair(labels[first_neuron_index], labels[sec_neuron_index]));
         uint32_t iteration = 1;
         //train first layer
         log_netw->info("********************Train first layer************************");
         while (iteration <= num_iteration_first_layer)
         {
-            trainOneEpoch(points);
+            trainOneEpoch(points, labels);
             log_netw->info("----------------------------------------------------------------------");
             log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
@@ -708,6 +710,31 @@ namespace nn
             of << neur.label() << std::endl;
         }
 
+        of.close();
+    }
+
+    void ESoinn::printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters, uint32_t start_value) const
+    {
+        std::ofstream of(filename);
+        for (uint32_t i = 0; i < clusters.size(); i++) //  const auto& clust: clusters)
+        {
+            if (clusters[i].size() < 5)
+                continue;
+            for (const uint32_t neuron_num: clusters[i])
+            {
+                const neuron::ESoinnNeuron& neur = m_Neurons[neuron_num];
+                if (neur.is_deleted())
+                    continue;
+            
+                const wv::AbstractWeightVector* av = neur.getWv();
+                for (uint32_t j = 0; j < av->getNumDimensions(); j++)
+                {
+                    of << av->getConcreteCoord(j) << ",";
+                }
+                of << i + start_value << std::endl;      
+            }
+        }
+        
         of.close();
     }
 
