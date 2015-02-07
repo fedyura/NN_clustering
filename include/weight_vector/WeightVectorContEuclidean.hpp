@@ -17,7 +17,7 @@ namespace wv //wv => weight_vector
 
         double getConcreteCoord(uint32_t number) const
         {
-            return m_Coords.at(number);
+            return m_Coords[number]; //m_Coords.at(number); 
         }
         
         //Calculate distance between this weight vector and Point p

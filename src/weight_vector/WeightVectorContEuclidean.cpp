@@ -14,18 +14,11 @@ namespace wv
             throw std::runtime_error("Wrong number of point dimension"); 
         
         double dist = 0.0, diff = 0.0;
-        try
+        for (uint32_t i = 0; i < size; i++)
         {
-            for (uint32_t i = 0; i < size; i++)
-            {
-                diff = (getConcreteCoord(i) - p->getConcreteCoord(i));
-                dist += diff * diff;            
-            }
-        }
-        catch (std::exception& ex)
-        {
-            throw std::exception();
-        }
+            diff = (getConcreteCoord(i) - p->getConcreteCoord(i));
+            dist += diff * diff;            
+        }            
         
         return sqrt(dist);
     }
