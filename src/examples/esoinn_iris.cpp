@@ -32,7 +32,7 @@ int main (int argc, char* argv[])
     nn::ESoinn ns(NumDimensionsIrisDataset, 50 /*age_max*/, 150 /*lambda*/, 1.0 /*C1*/, 0.1 /*C2*/); 
         
     std::vector<std::vector<uint32_t>> conn_comp;
-    ns.trainNetwork(points, conn_comp, 20);  
+    ns.trainNetwork(points, conn_comp, answers, 20);  
     ns.dumpNetwork(); 
     
     for (uint32_t i = 0; i < conn_comp.size(); i++)
