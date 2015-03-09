@@ -505,7 +505,8 @@ namespace nn
                 deleteEdgesDiffClasses();
                 deleteNodes();
             }
-            
+            if (iteration % 10000 == 0)
+                log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
         }
         deleteNodes();
@@ -530,7 +531,8 @@ namespace nn
             log_netw->info((boost::format("Iteration %d") % iteration).str());
             iteration++;
         }
-        findClustersMCL(result);
+        //findClustersMCL(result);
+        findConnectedComponents(result);
     }
     
     void ESoinn::trainNetworkNoiseReduction(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels,
@@ -651,7 +653,7 @@ namespace nn
     
         //run mcl algorithm
         std::string output_mcl = "mcl_clusters.tmp";    
-        std::string options = " -I 2.0 --abc -o ";
+        std::string options = " -I 1.2 --abc -o ";
         std::string command = mcl_path + output_src_mcl + options + output_mcl;
         system(command.c_str());
         
@@ -713,13 +715,35 @@ namespace nn
         of.close();
     }
 
-    void ESoinn::printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters, uint32_t start_value) const
+    bool ESoinn::checkClusterValidity(const std::vector<uint32_t>& cluster, std::string& num) const
+    {
+        std::string cluster_label = "0";
+        num = "0";
+        for (const uint32_t num: cluster)
+        {
+            std::string cur_label = m_Neurons[num].label();
+            if (cur_label != "0")
+            {
+                if (cluster_label == "0")
+                    cluster_label = cur_label;
+                if (cluster_label != cur_label)
+                    return false; 
+            }
+        }
+        num = cluster_label;
+        return true;
+    }
+    
+    void ESoinn::printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters) const
     {
         std::ofstream of(filename);
         for (uint32_t i = 0; i < clusters.size(); i++) //  const auto& clust: clusters)
         {
-            if (clusters[i].size() < 5)
+            std::string num = "0";
+            bool check_cluster = checkClusterValidity(clusters[i], num);
+            if (clusters[i].size() < 5 || !check_cluster || num == "0")
                 continue;
+                        
             for (const uint32_t neuron_num: clusters[i])
             {
                 const neuron::ESoinnNeuron& neur = m_Neurons[neuron_num];
@@ -731,7 +755,7 @@ namespace nn
                 {
                     of << av->getConcreteCoord(j) << ",";
                 }
-                of << i + start_value << std::endl;      
+                of << num << std::endl;      
             }
         }
         
@@ -754,5 +778,38 @@ namespace nn
     {
         m_Neurons[neur1].updateEdge(neur2);
         m_Neurons[neur2].updateEdge(neur1);    
+    }
+
+    //Depth-first search
+    void ESoinn::dfs_comp(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const
+    {
+        marked[vert_number] = true;
+        concr_comp.push_back(vert_number);
+        for (uint32_t num: m_Neurons[vert_number].getNeighbours())
+        {
+            if (!marked[num])
+            {
+                dfs_comp(marked, num, concr_comp);
+            }
+        }
+    }
+    
+    void ESoinn::findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const //comp_number => vertex in component
+    {
+        uint32_t graph_vertex_num = m_Neurons.size();
+        cont::StaticArray<bool> marked(graph_vertex_num);
+
+        for (uint32_t i = 0; i < graph_vertex_num; i++)
+            marked[i] = false;
+
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (!marked[i])
+            {
+                std::vector<uint32_t> concr_comp;
+                dfs_comp(marked, i, concr_comp);
+                conn_comp.push_back(concr_comp);
+            }
+        }
     }
 } //nn

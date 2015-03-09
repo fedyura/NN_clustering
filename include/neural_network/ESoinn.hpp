@@ -28,7 +28,7 @@ namespace nn
         uint32_t findPointCluster(const wv::Point* p, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
         void dumpNetwork() const;
         void printNetworkNodesFile(const std::string& filename) const;
-        void printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters, uint32_t start_value = 0) const;
+        void printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters) const;
         
         //functions for testing
         double getNeuronCoord(uint32_t num, uint32_t coord) const
@@ -111,9 +111,13 @@ namespace nn
         //for tests
         void InsertConcreteNeuron(const wv::Point* p, const std::string& neur_class = "0"); 
         void InsertConcreteEdge(uint32_t neur1, uint32_t neur2);
+
+        void dfs_comp(cont::StaticArray<bool>& marked, int vert_number, std::vector<uint32_t>& concr_comp) const;
+        void findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const; //comp_number => vertex in component
       
       private:
         void trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels = std::vector<std::string> ());
+        bool checkClusterValidity(const std::vector<uint32_t>& cluster, std::string& num) const;
         void SealNeuronVector();
         
         uint32_t m_NumDimensions;

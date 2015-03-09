@@ -10,7 +10,7 @@ namespace
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("NeuralGas");
     
     std::unordered_map<uint32_t, uint32_t> neuron_clusters; //neuron => cluster
-    const uint32_t NumDimensionsIrisDataset = 4;
+    const uint32_t NumDimensionsSynthetic = 2;
 
     void readMCLAnswer(const std::string& filename)
     {
@@ -37,14 +37,14 @@ namespace
         std::vector<std::shared_ptr<wv::Point>> points;
         std::vector<std::string> answers;
 
-        if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
+        if (!ex::readDataSet("aggregation", NumDimensionsSynthetic, points, answers))
         {
             std::cerr << "readIrisDataSet function works incorrect" << std::endl;
         }
         
         std::ofstream out(filename, std::ios::out);
         
-        double threshold = 2.5, weight = 0;
+        double threshold = 7, weight = 0;
         for (uint32_t i = 0; i < points.size(); i++)
         {
             wv::WeightVectorContEuclidean* sWeightVector = dynamic_cast<wv::WeightVectorContEuclidean*>(points[i].get()); 
@@ -63,18 +63,21 @@ namespace
 
 int main (int argc, char* argv[])
 {
-    //FormMCLInputFile("mcl_input");
+    std::string output_filename = "mcl_input";
+    FormMCLInputFile(output_filename);
     
     std::vector<std::shared_ptr<wv::Point>> points;
     std::vector<std::string> answers;
 
+    
     log_netw->info("Hello world");
     
-    if (!ex::readDataSet("iris_dataset", NumDimensionsIrisDataset, points, answers))
+    if (!ex::readDataSet("aggregation", NumDimensionsSynthetic, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
-        
+    
+    /*    
     //0x3x14
     std::string output_filename = "points";
     //good result
@@ -82,11 +85,12 @@ int main (int argc, char* argv[])
     nn::NeuralGas ng(NumDimensionsIrisDataset, 0.2, 0.006, 0.5, 0.995, 100, 50); 
     ng.trainNetwork(points, 0.05);   
     ng.exportEdgesFile(output_filename);
+    */
     
     //run mcl algorithm
     std::string mcl_path = "/home/yura/local/bin/mcl ";
     std::string output_mcl = "clusters";    
-    std::string options = " -I 2.0 --abc -o ";
+    std::string options = " -I 1.5 --abc -o ";
     std::string command = mcl_path + output_filename + options + output_mcl;
     system(command.c_str());
     
@@ -94,10 +98,39 @@ int main (int argc, char* argv[])
     readMCLAnswer(output_mcl);
     
     //define clusters
+    /*
     for (const auto p: points)
     {
         log_netw->info((boost::format("%d") % ng.findPointCluster(p.get(), neuron_clusters)).str(), true);
     }
+    */
+
+    //print file for visualization
+    std::ofstream of("visualize_file", std::ios::out);
+    std::ofstream ofc("cluster_file", std::ios::out);
+    for (uint32_t j = 0; j < points.size(); j++) 
+    {
+        auto p = points[j];
+        for (uint32_t i = 0; i < p->getNumDimensions(); i++)
+        {
+            of << p->getConcreteCoord(i);
+            ofc << p->getConcreteCoord(i) << " ";
+
+            if (i != p->getNumDimensions() - 1)
+                of << " ";
+        }
+        of << std::endl;
+        try
+        {
+        ofc << neuron_clusters.at(j) << std::endl; //ns.findPointCluster(p.get(), neuron_clusters) << std::endl;      
+        }
+        catch(std::out_of_range& exc)
+        {
+            std::cout << "exception " << j << std::endl;
+        }
+    }
+    of.close();
+    ofc.close();
             
     log_netw->info("\n", true);
     log_netw->info("The program is succesfully ended");

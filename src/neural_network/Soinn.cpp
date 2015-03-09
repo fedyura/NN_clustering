@@ -421,6 +421,7 @@ namespace nn
         }
         std::vector<std::vector<uint32_t>> first_layer_clust;
         findClustersMCL(first_layer_clust);
+        //findConnectedComponents(first_layer_clust);
 
         //train second layer
         log_netw->info("********************Train second layer************************");
@@ -436,6 +437,7 @@ namespace nn
             iteration++;
         }
         findClustersMCL(result);
+        //findConnectedComponents(result);
     }
 
     void Soinn::exportEdgesFile(const std::string& filename) const
@@ -627,7 +629,7 @@ namespace nn
     
         //run mcl algorithm
         std::string output_mcl = "mcl_clusters.tmp";    
-        std::string options = " -I 2.0 --abc -o ";
+        std::string options = " -I 1.6 --abc -o ";
         std::string command = mcl_path + output_src_mcl + options + output_mcl;
         system(command.c_str());
         
