@@ -8,7 +8,7 @@ namespace
 {
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("KohonenNetwork");
     const uint32_t NumDimensionsSynthetic = 2;
-    const uint32_t NumClustersSynthetic = 7;
+    const uint32_t NumClustersSynthetic = 6;
 }
 
 int main (int argc, char* argv[])
@@ -18,13 +18,13 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readDataSet("aggregation", NumDimensionsSynthetic, points, answers))
+    if (!ex::readDataSet("../data/compound", NumDimensionsSynthetic, points, answers))
     {
-        log_netw->error("readIrisDataSet function works incorrect");
+        log_netw->error("readDataSet function works incorrect");
     }
         
     //0x3x14
-    alr::KohonenParameters kp(1.4, 2.2, 1.0, 4);
+    alr::KohonenParameters kp(1.4, 2.2, 1.5, 2.0);
     nn::KohonenNN knn(NumClustersSynthetic, NumDimensionsSynthetic, kp, 0); 
 
     knn.trainNetwork(points, 0.000001);
@@ -38,22 +38,22 @@ int main (int argc, char* argv[])
     
     
     //print file for visualization
-    std::ofstream of("visualize_file", std::ios::out);
+    //std::ofstream of("visualize_file", std::ios::out);
     std::ofstream ofc("cluster_file", std::ios::out);
     for (const auto p: points)
     {
         for (uint32_t i = 0; i < p->getNumDimensions(); i++)
         {
-            of << p->getConcreteCoord(i);
+            //of << p->getConcreteCoord(i);
             ofc << p->getConcreteCoord(i) << " ";
 
-            if (i != p->getNumDimensions() - 1)
-                of << " ";
+            //if (i != p->getNumDimensions() - 1)
+            //    of << " ";
         }
-        of << std::endl;
+        //of << std::endl;
         ofc << knn.getCluster(p.get()) << std::endl;      
     }
-    of.close();
+    //of.close();
     ofc.close();
     
     log_netw->info("\n", true);

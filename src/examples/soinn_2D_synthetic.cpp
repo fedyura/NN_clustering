@@ -43,7 +43,7 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readDataSet("s2.txt", NumDimensionsSynthetic, points, answers))
+    if (!ex::readDataSet("../data/s4", NumDimensionsSynthetic, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
@@ -56,11 +56,12 @@ int main (int argc, char* argv[])
     
     //nn::Soinn ns(NumDimensionsSynthetic, 0.167, 0.25, 0.25, 0.667, 0.75, 100 /*age_max*/, 25 /*lambda*/, 0.55); 
     
-    nn::Soinn ns(NumDimensionsSynthetic, 0.167, 0.25, 0.25, 0.667, 0.75, 10 /*age_max*/, 50 /*lambda*/, 0.75); 
+    nn::Soinn ns(NumDimensionsSynthetic, 0.167, 0.25, 0.25, 0.667, 0.75, 8 /*age_max*/, 10 /*lambda*/, 1.0); 
         
     std::vector<std::vector<uint32_t>> conn_comp;
-    ns.trainNetwork(points, conn_comp, 50, 10);   
+    ns.trainNetwork(points, conn_comp, 2, 2);   
     
+    std::cout << "Number of clusters " << conn_comp.size() << std::endl;
     for (uint32_t i = 0; i < conn_comp.size(); i++)
         for (uint32_t j = 0; j < conn_comp[i].size(); j++)
             neuron_clusters.emplace(conn_comp[i][j], i);
