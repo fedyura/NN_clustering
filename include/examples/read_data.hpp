@@ -5,9 +5,11 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <neuron/AbstractNeuron.hpp>
 #include <sstream>
 #include <vector>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
+#include <weight_vector/WeightVectorCosine.hpp>
 
 namespace ex
 {
@@ -22,7 +24,7 @@ namespace ex
         return elems;
     }
 
-    bool readDataSet(const std::string& filename, const uint32_t num_dimensions, std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::string>& answers)
+    bool readDataSet(const std::string& filename, const uint32_t num_dimensions, std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::string>& answers, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN)
     {
         std::vector<std::vector<double>> coords;
         std::vector<std::pair<double, double>> min_max_values;
@@ -46,7 +48,8 @@ namespace ex
             std::vector<std::string> items = split(line, ',');
             if (items.size() != num_dimensions + 1)
             {
-                std::cerr << "Error! Wrong line format" << std::endl;
+                std::cerr << line << std::endl;
+                std::cerr << "Error! Wrong line format. Items.size() = " << items.size() << " but must be " << num_dimensions + 1 << std::endl;
                 return false;
             }
             
@@ -82,8 +85,16 @@ namespace ex
                 else arr[i] = 0;    
             }
             
-            std::shared_ptr<wv::WeightVectorContEuclidean> swv(new wv::WeightVectorContEuclidean(arr));
-            points.push_back(swv);
+            if (nt == neuron::NeuronType::EUCLIDEAN)
+            {
+                std::shared_ptr<wv::WeightVectorContEuclidean> swv(new wv::WeightVectorContEuclidean(arr));
+                points.push_back(swv);
+            }
+            else if (nt == neuron::NeuronType::COSINE)
+            {
+                std::shared_ptr<wv::WeightVectorCosine> swv(new wv::WeightVectorCosine(arr));
+                points.push_back(swv);
+            }
         }
         return true;
     }
