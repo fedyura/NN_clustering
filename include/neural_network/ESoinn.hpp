@@ -8,7 +8,6 @@
 #include <set>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
 #include <weight_vector/WeightVectorCosine.hpp>
-#include <weight_vector/WeightVectorPhrase.hpp>
 
 namespace nn
 {
@@ -18,7 +17,7 @@ namespace nn
     class ESoinn
     {
       public:
-        ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN, std::unordered_map<std::string, std::unordered_map<std::string, double>>& distances = std::unordered_map<std::string, std::unordered_map<std::string, double>>());
+        ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
             
         ~ESoinn();
 
@@ -144,7 +143,6 @@ namespace nn
         uint32_t m_NumSecondWinner;
         
         uint32_t m_NumEmptyNeurons;        
-        const std::unordered_map<std::string, std::unordered_map<std::string, double>>& m_Distances;
     };
 }
 

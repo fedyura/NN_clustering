@@ -12,7 +12,7 @@ namespace nn
 {
     logger::ConcreteLogger* log_netw = logger::Logger::getLog("ESoinn");
     
-    ESoinn::ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit, neuron::NeuronType nt, std::unordered_map<std::string, std::unordered_map<std::string, double>>& distances)
+    ESoinn::ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit, neuron::NeuronType nt) 
     : m_NumDimensions(num_dimensions)
     , m_AgeMax(age_max)
     , m_Lambda(lambda)
@@ -23,7 +23,6 @@ namespace nn
     , m_NumWinner(0)
     , m_NumSecondWinner(0)
     , m_NumEmptyNeurons(0)
-    , m_Distances(distances)
     {
         if (m_NumDimensions < 1)
             throw std::runtime_error("Can't construct neural network. The number of dimensions must be more than 0.");
@@ -68,14 +67,6 @@ namespace nn
             {
                 wv::WeightVectorCosine* sWeightVector1 = new wv::WeightVectorCosine(coords1);
                 wv::WeightVectorCosine* sWeightVector2 = new wv::WeightVectorCosine(coords2);
-                m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector1, src_label.first));
-                m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector2, src_label.second));
-                break;
-            }
-            case neuron::NeuronType::PHRASE:
-            {
-                wv::WeightVectorPhrase* sWeightVector1 = new wv::WeightVectorPhrase(coords1, m_Distances);
-                wv::WeightVectorPhrase* sWeightVector2 = new wv::WeightVectorPhrase(coords2, m_Distances);
                 m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector1, src_label.first));
                 m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector2, src_label.second));
                 break;
@@ -194,12 +185,6 @@ namespace nn
                 {
                     wv::WeightVectorCosine* sWeightVector = new wv::WeightVectorCosine(coords);
                     m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, label));            
-                    break;
-                }
-                case neuron::NeuronType::PHRASE:
-                {
-                    wv::WeightVectorPhrase* sWeightVector = new wv::WeightVectorPhrase(coords, m_Distances);
-                    m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, src_label.first));
                     break;
                 }
                 default:
@@ -962,12 +947,6 @@ namespace nn
             case neuron::NeuronType::COSINE:
             {
                 wv::WeightVectorCosine* sWeightVector = new wv::WeightVectorCosine(coords);
-                m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, neur_class));
-                break;
-            }
-            case neuron::NeuronType::PHRASE:
-            {
-                wv::WeightVectorPhrase* sWeightVector = new wv::WeightVectorPhrase(coords, m_Distances);
                 m_Neurons.push_back(neuron::ESoinnNeuron(sWeightVector, neur_class));
                 break;
             }
