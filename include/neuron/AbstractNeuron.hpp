@@ -7,7 +7,8 @@ namespace neuron
 {
     enum NeuronType
     {
-        EUCLIDEAN = 1
+        EUCLIDEAN = 1,
+        COSINE    = 2
     };
     
     class AbstractNeuron

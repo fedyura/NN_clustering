@@ -5,6 +5,7 @@
 #include <neural_network/Common.hpp>
 #include <neuron/SoinnNeuron.hpp>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
+#include <weight_vector/WeightVectorCosine.hpp>
 
 namespace nn
 {

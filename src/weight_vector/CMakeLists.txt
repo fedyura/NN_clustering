@@ -1,2 +1,2 @@
-ADD_LIBRARY(weight_vector STATIC WeightVectorContEuclidean.cpp)
+ADD_LIBRARY(weight_vector STATIC WeightVectorContEuclidean.cpp WeightVectorCosine.cpp)
 ADD_SUBDIRECTORY(test)

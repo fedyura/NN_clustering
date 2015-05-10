@@ -55,10 +55,30 @@ namespace nn
             coords2[i] = points.second->getConcreteCoord(i);
         }
         
-        wv::WeightVectorContEuclidean* sWeightVector1 = new wv::WeightVectorContEuclidean(coords1);
-        wv::WeightVectorContEuclidean* sWeightVector2 = new wv::WeightVectorContEuclidean(coords2);
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector1));
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
+        switch(m_NeuronType)
+        {
+            case neuron::NeuronType::EUCLIDEAN:
+            {
+                wv::WeightVectorContEuclidean* sWeightVector1 = new wv::WeightVectorContEuclidean(coords1);
+                wv::WeightVectorContEuclidean* sWeightVector2 = new wv::WeightVectorContEuclidean(coords2);
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector1));
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
+                break;
+            }
+            case neuron::NeuronType::COSINE:
+            {
+                wv::WeightVectorCosine* sWeightVector1 = new wv::WeightVectorCosine(coords1);
+                wv::WeightVectorCosine* sWeightVector2 = new wv::WeightVectorCosine(coords2);
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector1));
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector2));
+                break;
+            }
+            default:
+            {
+                throw std::runtime_error("Can't construct neural network. Incorrect neuron type.");
+                break;
+            }
+        }
         log_netw->debug("Network is successfully initialized");
     }
 
@@ -144,8 +164,26 @@ namespace nn
             for (uint32_t i = 0; i < m_NumDimensions; i++)
                 coords[i] = p->getConcreteCoord(i);
             
-            wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
-            m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+            switch(m_NeuronType)
+            {
+                case neuron::NeuronType::EUCLIDEAN:
+                {
+                    wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
+                    m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+                    break;
+                }
+                case neuron::NeuronType::COSINE:
+                {
+                    wv::WeightVectorCosine* sWeightVector = new wv::WeightVectorCosine(coords);
+                    m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+                    break;
+                }
+                default:
+                {
+                    throw std::runtime_error("Can't construct neural network. Incorrect neuron type.");
+                    break;
+                }
+            }
         }
         else
         {
@@ -200,8 +238,27 @@ namespace nn
         for (uint32_t i = 0; i < size; i++)
             coords[i] = p->getConcreteCoord(i);
 
-        wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
-        m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));
+        
+        switch(m_NeuronType)
+        {
+            case neuron::NeuronType::EUCLIDEAN:
+            {
+                wv::WeightVectorContEuclidean* sWeightVector = new wv::WeightVectorContEuclidean(coords);
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+                break;
+            }
+            case neuron::NeuronType::COSINE:
+            {
+                wv::WeightVectorCosine* sWeightVector = new wv::WeightVectorCosine(coords);
+                m_Neurons.push_back(neuron::SoinnNeuron(sWeightVector));            
+                break;
+            }
+            default:
+            {
+                throw std::runtime_error("Can't construct neural network. Incorrect neuron type.");
+                break;
+            }
+        }   
     }
 
     void Soinn::InsertConcreteEdge(uint32_t neur1, uint32_t neur2)
@@ -629,7 +686,7 @@ namespace nn
     
         //run mcl algorithm
         std::string output_mcl = "mcl_clusters.tmp";    
-        std::string options = " -I 1.6 --abc -o ";
+        std::string options = " -I 2.0 --abc -o ";
         std::string command = mcl_path + output_src_mcl + options + output_mcl;
         system(command.c_str());
         

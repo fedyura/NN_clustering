@@ -23,6 +23,8 @@ namespace wv //wv => weight_vector
 
         //Get concrete coord
         virtual double getConcreteCoord(uint32_t number) const = 0;
+        virtual std::string getConcreteCoord(uint32_t number) const = 0;
+                
         virtual uint32_t getNumDimensions() const = 0;
  
         virtual void eraseOffset() = 0;

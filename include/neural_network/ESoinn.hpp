@@ -7,6 +7,8 @@
 #include <neuron/ESoinnNeuron.hpp>
 #include <set>
 #include <weight_vector/WeightVectorContEuclidean.hpp>
+#include <weight_vector/WeightVectorCosine.hpp>
+#include <weight_vector/WeightVectorPhrase.hpp>
 
 namespace nn
 {
@@ -16,12 +18,12 @@ namespace nn
     class ESoinn
     {
       public:
-        ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN);
+        ESoinn(uint32_t num_dimensions, double age_max, uint32_t lambda, double C1, double C2, NetworkStopCriterion nnit = NetworkStopCriterion::LOCAL_ERROR, neuron::NeuronType nt = neuron::NeuronType::EUCLIDEAN, std::unordered_map<std::string, std::unordered_map<std::string, double>>& distances = std::unordered_map<std::string, std::unordered_map<std::string, double>>());
             
         ~ESoinn();
 
         void trainNetwork(const std::vector<std::shared_ptr<wv::Point>>& points, std::vector<std::vector<uint32_t>>& result,
-                                  const std::vector<std::string>& labels, uint32_t num_iteration_first_layer);
+                                  const std::vector<std::string>& labels, uint32_t num_iteration_first_layer, uint32_t num_iteration_second_layer = 0);
         void trainNetworkNoiseReduction(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels,
                                         uint32_t num_iteration_first_layer);
         void exportEdgesFile(const std::string& filename) const;
@@ -82,7 +84,8 @@ namespace nn
 
         std::pair<double, double> findWinners(const wv::Point* p);
         double evalThreshold(uint32_t num_neuron);
-        void processNewPoint(const wv::Point* p, std::string label);
+        //void processNewPoint(const wv::Point* p, std::string label);
+        void processNewPoint(const wv::Point* p, std::string label, bool train_first_layer, double threshold_sec_layer);
         
         void incrementEdgeAgeFromWinner();
         void updateEdgeWinSecWin();
@@ -107,6 +110,10 @@ namespace nn
         void deleteNeuron(uint32_t number);
         
         void findClustersMCL(std::vector<std::vector<uint32_t>>& clusters) const;
+        double calcThresholdSecondLayer(const std::vector<std::vector<uint32_t>>& clusters) const;
+        void calcBetweenClustersDistanceVector(const std::vector<std::vector<uint32_t>>& conn_comp, std::vector<double>& dist) const;
+        double calcDistanceBetweenTwoClusters(std::vector<uint32_t> cluster1, std::vector<uint32_t> cluster2) const;
+        double calcInnerClusterDistance() const;
         
         //for tests
         void InsertConcreteNeuron(const wv::Point* p, const std::string& neur_class = "0"); 
@@ -116,7 +123,7 @@ namespace nn
         void findConnectedComponents(std::vector<std::vector<uint32_t>>& conn_comp) const; //comp_number => vertex in component
       
       private:
-        void trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, const std::vector<std::string>& labels = std::vector<std::string> ());
+        void trainOneEpoch(const std::vector<std::shared_ptr<wv::Point>>& points, bool train_first_layer, double threshold_sec_layer, const std::vector<std::string>& labels = std::vector<std::string> ());
         bool checkClusterValidity(const std::vector<uint32_t>& cluster, std::string& num) const;
         void SealNeuronVector();
         
@@ -137,6 +144,7 @@ namespace nn
         uint32_t m_NumSecondWinner;
         
         uint32_t m_NumEmptyNeurons;        
+        const std::unordered_map<std::string, std::unordered_map<std::string, double>>& m_Distances;
     };
 }
 
