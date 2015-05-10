@@ -20,4 +20,7 @@ ADD_EXECUTABLE (ESoinnForest esoinn_forest.cpp)
 TARGET_LINK_LIBRARIES(ESoinnForest esoinn weight_vector)
 
 ADD_EXECUTABLE (ESoinnSynthetic esoinn_2D_synthetic.cpp)
-TARGET_LINK_LIBRARIES(ESoinnSynthetic esoinn weight_vector)
+TARGET_LINK_LIBRARIES(ESoinnSynthetic esoinn weight_vector quality_measures)
+
+ADD_EXECUTABLE (FindMetrics find_metrics.cpp)
+TARGET_LINK_LIBRARIES(FindMetrics weight_vector quality_measures)
