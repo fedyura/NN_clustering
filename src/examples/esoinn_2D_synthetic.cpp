@@ -23,7 +23,7 @@ int main (int argc, char* argv[])
 
     log_netw->info("Hello world");
     
-    if (!ex::readDataSet("../data/s4", NumDimensionsSynthetic, points, answers))
+    if (!ex::readDataSet("../data/compound", NumDimensionsSynthetic, points, answers))
     {
         std::cerr << "readIrisDataSet function works incorrect" << std::endl;
     }
@@ -47,27 +47,23 @@ int main (int argc, char* argv[])
     
     
     //nn::ESoinn ns(NumDimensionsSynthetic, 100 /*age_max*/, 50 /*lambda*/, 0.9 /*C1*/, 0.9 /*C2*/); //S2 dataset mcl 1.2        10,20 итераций
-    nn::ESoinn ns(NumDimensionsSynthetic, 15 /*age_max*/, 30 /*lambda*/, 0.9 /*C1*/, 0.9 /*C2*/); //S2 dataset mcl 1.2        10,20 итераций
     
-
-
+    
+    //nn::ESoinn ns(NumDimensionsSynthetic, 15 /*age_max*/, 30 /*lambda*/, 0.9 /*C1*/, 0.9 /*C2*/); //S2 dataset mcl 1.2        10,20 итераций
     //----------------------------------------------------------------------------
     //nn::ESoinn ns(NumDimensionsSynthetic, 30 /*age_max*/, 15 /*lambda*/, 0.1 /*C1*/, 0.05 /*C2*/); //Pathbased dataset mcl 1.2    20,30 итераций    
-    //nn::ESoinn ns(NumDimensionsSynthetic, 23 /*age_max*/, 25 /*lambda*/, 0.1 /*C1*/, 0.05 /*C2*/); //Compound dataset mcl 1.2     10,50 итераций   
+    nn::ESoinn ns(NumDimensionsSynthetic, 23 /*age_max*/, 25 /*lambda*/, 0.1 /*C1*/, 0.05 /*C2*/); //Compound dataset mcl 1.2     10,50 итераций   
     
     //nn::ESoinn ns(NumDimensionsSynthetic, 100 /*age_max*/, 50 /*lambda*/, 0.72 /*C1*/, 0.9 /*C2*/); //S2 dataset mcl 1.2        10,20 итераций
     
     //nn::ESoinn ns(NumDimensionsSynthetic, 15 /*age_max*/, 30 /*lambda*/, 0.9 /*C1*/, 0.9 /*C2*/); //S4 dataset mcl 1.2        10,20 итераций
     //----------------------------------------------
     
-
-
-
     //nn::ESoinn ns(NumDimensionsSynthetic, 50 /*age_max*/, 60 /*lambda*/, 0.7 /*C1*/, 0.1 /*C2*/); //Jain dataset mcl 1.2
     
 
     std::vector<std::vector<uint32_t>> conn_comp;
-    ns.trainNetwork(points, conn_comp, answers, 20, 10);   
+    ns.trainNetwork(points, conn_comp, answers, 10, 50);   
     
     std::cout << "Number of clusters " << conn_comp.size() << std::endl;
     
@@ -132,7 +128,8 @@ int main (int argc, char* argv[])
         if (i % 50 == 0) log_netw->info("\n", true);
     }
     */
-            
+    ns.exportNetworkGDF("network.gdf", neuron_clusters);
+                
     log_netw->info("\n", true);
     log_netw->info("The program is succesfully ended");
     return 0;

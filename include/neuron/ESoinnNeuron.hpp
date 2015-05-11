@@ -158,7 +158,12 @@ namespace neuron
         {
             return m_Label;
         }
-
+        
+        std::unordered_map<uint32_t, uint32_t> getNeighboursAge() const
+        {
+            return m_Neighbours;
+        }
+      
       private:        
         bool m_IsDeleted;
         std::string m_Label;

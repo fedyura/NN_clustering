@@ -31,6 +31,8 @@ namespace nn
         void printNetworkNodesFile(const std::string& filename) const;
         void printNetworkClustersFile(const std::string& filename, const std::vector<std::vector<uint32_t>>& clusters) const;
         
+        void exportNetworkGDF(const std::string& filename, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const;
+        
         //functions for testing
         double getNeuronCoord(uint32_t num, uint32_t coord) const
         {

@@ -814,7 +814,7 @@ namespace nn
     
         //run mcl algorithm
         std::string output_mcl = "mcl_clusters.tmp";    
-        std::string options = " -I 2.0 --abc -o ";
+        std::string options = " -I 1.2 --abc -o ";
         std::string command = mcl_path + output_src_mcl + options + output_mcl;
         system(command.c_str());
         
@@ -877,7 +877,42 @@ namespace nn
 
         of.close();
     }
+    
+    void ESoinn::exportNetworkGDF(const std::string& filename, const std::unordered_map<uint32_t, uint32_t>& neuron_cluster) const
+    {
+        std::ofstream of(filename);
+        of << "nodedef>name VARCHAR,color VARCHAR" << std::endl;
 
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            const uint32_t num_cluster = neuron_cluster.at(i);
+            const uint32_t red = (num_cluster + 100)*17 % 256;
+            const uint32_t green = (num_cluster + 150)*29 % 256;
+            const uint32_t blue = (num_cluster + 75)*37 % 256;
+
+            of << "s" << i << ",'" << red << "," << green << "," << blue << "'" << std::endl;
+        }
+        of << "edgedef>node1 VARCHAR,node2 VARCHAR,weight DOUBLE" << std::endl; 
+        for (uint32_t i = 0; i < m_Neurons.size(); i++)
+        {
+            if (m_Neurons[i].is_deleted())
+                continue;
+            
+            //std::vector<uint32_t> neighbour = m_Neurons[i].getNeighbours();
+            std::unordered_map<uint32_t, uint32_t> neighbour = m_Neurons[i].getNeighboursAge();
+            for (const auto& neigh: neighbour)
+            {
+                if (i < neigh.first)
+                {
+                    of << "s" << i << ",s" << neigh.first << "," << 41.0 / (neigh.second+1) << std::endl;
+                }
+            }
+        }
+    }
+    
     bool ESoinn::checkClusterValidity(const std::vector<uint32_t>& cluster, std::string& num) const
     {
         log_netw->debug("checkClusterValidity function");
